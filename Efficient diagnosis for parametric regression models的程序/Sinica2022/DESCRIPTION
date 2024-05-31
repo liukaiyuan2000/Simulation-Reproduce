@@ -1,0 +1,13 @@
+Package: Sinica2022
+Type: Package
+Title: Efficient diagnostics for parametric regression models with distortion measurement errors incorporating dimension-reduction
+Version: 0.3.0
+Author: lky
+Maintainer: The package maintainer <yourself@somewhere.net>
+Description: Efficient diagnostics for parametric regression models with distortion measurement errors incorporating dimension-reduction
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Imports: Rcpp (>= 1.0.1)
+LinkingTo: Rcpp, RcppEigen
+RoxygenNote: 7.2.3

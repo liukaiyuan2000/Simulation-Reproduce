@@ -1,0 +1,3 @@
+exportPattern("^[[:alpha:]]+")
+importFrom(Rcpp, evalCpp)
+useDynLib(Sinica2022, .registration = TRUE)

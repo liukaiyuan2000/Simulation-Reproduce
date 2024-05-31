@@ -1,0 +1,9 @@
+for i
+  Step 1: Generate data --- GeneData
+  Step 2: Error correction --- CaliLocaLine / CaliLocaCons 
+  Step 3: Estimate beta --- EstiBeta
+  Step 4: Compute test statistics --- StatCvM / StatCvMRand / StatKSRand
+  Step 5: Bootstrap resampling, determine critical value --- BootResi
+end
+
+Step 6: Compute rejection rates --- RejectRate
