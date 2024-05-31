@@ -1,0 +1,13 @@
+Package: Bio2005
+Type: Package
+Title: Testing for complete independence in high dimensions
+Version: 0.1.0
+Author: Lky
+Maintainer: The package maintainer <yourself@somewhere.net>
+Description: Testing for complete independence in high dimensions, Refered by JAMES R. SCHOTT, Biometrika2005
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Imports: Rcpp (>= 1.0.11)
+LinkingTo: Rcpp, RcppEigen
+RoxygenNote: 7.2.3
