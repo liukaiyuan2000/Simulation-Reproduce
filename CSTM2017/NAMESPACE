@@ -1,3 +1,0 @@
-exportPattern("^[[:alpha:]]+")
-importFrom(Rcpp, evalCpp)
-useDynLib(CSTM2017, .registration = TRUE)
