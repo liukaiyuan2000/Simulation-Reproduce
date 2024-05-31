@@ -1,0 +1,13 @@
+Package: Bierens2012
+Type: Package
+Title: Integrated conditional moment tests for parametric conditional distributions
+Version: 0.5.0
+Author: lky
+Maintainer: The package maintainer <yourself@somewhere.net>
+Description: Simulation reproduction of article: integrated conditional moment tests for parametric conditional distributions. 
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Imports: Rcpp (>= 1.0.1), RcppEigen, purrr
+LinkingTo: Rcpp, RcppEigen
+RoxygenNote: 7.2.3
