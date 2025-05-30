@@ -1,0 +1,10 @@
+data<-read.table("Score.txt",head=T)
+row.names(data)<-data[,1]
+A<-data[,-1]
+f<-function(A){
+    A<-apply(A,1,sort)
+    apply(A,2,mean,trim=.33)
+}
+mingci<-order(f(A),decreasing=T)
+final.score<-data.frame(f(A),mingci)
+final.score
