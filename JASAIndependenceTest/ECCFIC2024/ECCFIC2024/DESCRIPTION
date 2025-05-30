@@ -1,0 +1,14 @@
+Package: ECCFIC2024
+Type: Package
+Title: Expected Conditional Characteristic Function based Measures for Testing Independence
+Version: 0.1.0
+Author: Kaiyuan Liu
+Maintainer: The package maintainer <yourself@somewhere.net>
+Description: More about what it does (maybe more than one line)
+    Use four spaces when indenting paragraphs within the Description.
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Imports: Rcpp (>= 1.0.1), RcppEigen (>= 0.3.4.0.0)
+LinkingTo: Rcpp, RcppEigen
+RoxygenNote: 7.3.1
