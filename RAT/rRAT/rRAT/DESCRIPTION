@@ -1,0 +1,14 @@
+Package: rRAT
+Type: Package
+Title: Rank-based Adaptive Independence Test
+Version: 0.1.0
+Author: Xiangyu Shi, Ruiyuan Cao, Jiang Du, Zhuqing Miao
+Maintainer: The package maintainer <yourself@somewhere.net>
+Description: More about what it does (maybe more than one line)
+    Use four spaces when indenting paragraphs within the Description.
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Imports: Rcpp (>= 1.0.1), RcppArmadillo
+LinkingTo: Rcpp, RcppArmadillo
+RoxygenNote: 7.2.3
