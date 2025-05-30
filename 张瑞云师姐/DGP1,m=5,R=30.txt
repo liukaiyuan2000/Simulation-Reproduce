@@ -1,0 +1,508 @@
+
+
+###################################################################
+# packages required
+###################################################################
+library(MASS)#Generates a multivariate normal distribution
+
+#################################################################
+#Calculate phi_hat and Phi
+#################################################################
+phi_hat <- function(X_nt,n,T)
+{
+  #Calculate phi_hat
+  K_hat_st <- t(X_nt)%*%X_nt/(n-1)
+  eigen_decomp <- eigen(K_hat_st)#Spectral decomposition
+  eigenvalues <- eigen_decomp$values#Extract eigenvalue
+  eigenvectors <- eigen_decomp$vectors#Extract feature vector
+  total_variance <- sum(eigenvalues)#Calculate the sum of the eigenvalues
+  sorted_indices <- order(eigenvalues,decreasing = TRUE)#Sort the eigenvalues by size
+  sorted_eigenvalues <- eigenvalues[sorted_indices]
+  sorted_eigenvectors <- eigenvectors[, sorted_indices]
+  variance_ratio <- cumsum(sorted_eigenvalues)/total_variance#Calculate the cumulative proportion of eigenvalues
+  selected_indices <- min(which(variance_ratio >=0.95))#Select the eigenvalues with a cumulative proportion of not less than 80%
+  lambda_hat <-  sorted_eigenvalues[1:selected_indices]#sorted_eigenvalues[selected_indices]
+  phi <- sorted_eigenvectors[,1:selected_indices]#sorted_eigenvectors[,selected_indices]
+  r <- 0.95
+  cumulative_variance <- cumsum(sorted_eigenvalues^2)/sum(sorted_eigenvalues^2)
+  j_n <- min(which(cumulative_variance>=r))
+  eta <- rep(0,j_n)
+  h_2_tilde <- rep(0,100) 
+  for(i in 1:j_n)
+  {
+    eta[i] <- rnorm(1,0,sqrt(lambda_hat[j_n]))
+	h_2_tilde <- h_2_tilde+eta[i]*sorted_eigenvectors[,i]
+  } 
+  #Calculate Phi
+  Phi <- X_nt%*%phi/T
+  
+  return(list(Phi=Phi,h_2_tilde=h_2_tilde))
+}
+
+#################################################################
+#Calculate theta_hat
+#################################################################
+thetaalpha_hat <- function(Z_n,W_n,Y_n1,Y_n2,n,Phi,T)
+{
+  Q_n1 <- cbind(W_n%*%Y_n1[,1],Z_n,W_n%*%Y_n1[,2],Z_n,W_n%*%Y_n1[,3],Z_n)#Calculate Q_n
+  Q_n2 <- cbind(W_n%*%Y_n2[,1],Z_n,W_n%*%Y_n2[,2],Z_n,W_n%*%Y_n2[,3],Z_n)
+  P <- Phi%*%ginv(t(Phi)%*%Phi)%*%t(Phi)
+
+  ######2sls###
+  #step1:
+  Q_np1 <- cbind(Q_n1[,1:3]%*%ginv(t(Q_n1[,1:3])%*%Q_n1[,1:3])%*%t(Q_n1[,1:3]),Q_n1[,4:6]%*%ginv(t(Q_n1[,4:6])%*%Q_n1[,4:6])%*%t(Q_n1[,4:6]),Q_n1[,7:9]%*%ginv(t(Q_n1[,7:9])%*%Q_n1[,7:9])%*%t(Q_n1[,7:9]))
+  Q_np2 <- cbind(Q_n2[,1:3]%*%ginv(t(Q_n2[,1:3])%*%Q_n2[,1:3])%*%t(Q_n2[,1:3]),Q_n2[,4:6]%*%ginv(t(Q_n2[,4:6])%*%Q_n2[,4:6])%*%t(Q_n2[,4:6]),Q_n2[,7:9]%*%ginv(t(Q_n2[,7:9])%*%Q_n2[,7:9])%*%t(Q_n2[,7:9]))
+  para_tilde11 <- ginv(rbind(t(W_n%*%Y_n1[,1]),t(Z_n),t(Phi))%*%Q_np1[,1:150]%*%cbind(W_n%*%Y_n1[,1],Z_n,Phi))%*%rbind(t(W_n%*%Y_n1[,1]),t(Z_n),t(Phi))%*%Q_np1[,1:150]%*%Y_n1[,1]
+  para_tilde12 <- ginv(rbind(t(W_n%*%Y_n1[,2]),t(Z_n),t(Phi))%*%Q_np1[,151:300]%*%cbind(W_n%*%Y_n1[,2],Z_n,Phi))%*%rbind(t(W_n%*%Y_n1[,2]),t(Z_n),t(Phi))%*%Q_np1[,151:300]%*%Y_n1[,2]
+  para_tilde13 <- ginv(rbind(t(W_n%*%Y_n1[,3]),t(Z_n),t(Phi))%*%Q_np1[,301:450]%*%cbind(W_n%*%Y_n1[,3],Z_n,Phi))%*%rbind(t(W_n%*%Y_n1[,3]),t(Z_n),t(Phi))%*%Q_np1[,301:450]%*%Y_n1[,3]
+  para_tilde21 <- ginv(rbind(t(W_n%*%Y_n2[,1]),t(Z_n),t(Phi))%*%Q_np2[,1:150]%*%cbind(W_n%*%Y_n2[,1],Z_n,Phi))%*%rbind(t(W_n%*%Y_n2[,1]),t(Z_n),t(Phi))%*%Q_np2[,1:150]%*%Y_n2[,1]
+  para_tilde22 <- ginv(rbind(t(W_n%*%Y_n2[,2]),t(Z_n),t(Phi))%*%Q_np2[,151:300]%*%cbind(W_n%*%Y_n2[,2],Z_n,Phi))%*%rbind(t(W_n%*%Y_n2[,2]),t(Z_n),t(Phi))%*%Q_np2[,151:300]%*%Y_n2[,2]
+  para_tilde23 <- ginv(rbind(t(W_n%*%Y_n2[,3]),t(Z_n),t(Phi))%*%Q_np2[,301:450]%*%cbind(W_n%*%Y_n2[,3],Z_n,Phi))%*%rbind(t(W_n%*%Y_n2[,3]),t(Z_n),t(Phi))%*%Q_np2[,301:450]%*%Y_n2[,3]
+  H_tilde11 <- cbind(W_n%*%ginv(diag(n)-para_tilde11[1]*W_n)%*%cbind(Phi*para_tilde11[4],Z_n),Z_n)
+  H_tilde12 <- cbind(W_n%*%ginv(diag(n)-para_tilde12[1]*W_n)%*%cbind(Phi*para_tilde12[4],Z_n),Z_n)
+  H_tilde13 <- cbind(W_n%*%ginv(diag(n)-para_tilde13[1]*W_n)%*%cbind(Phi*para_tilde13[4],Z_n),Z_n)
+  H_tilde21 <- cbind(W_n%*%ginv(diag(n)-para_tilde21[1]*W_n)%*%cbind(Phi*para_tilde21[4],Z_n),Z_n)
+  H_tilde22 <- cbind(W_n%*%ginv(diag(n)-para_tilde22[1]*W_n)%*%cbind(Phi*para_tilde22[4],Z_n),Z_n)
+  H_tilde23 <- cbind(W_n%*%ginv(diag(n)-para_tilde23[1]*W_n)%*%cbind(Phi*para_tilde23[4],Z_n),Z_n)
+
+  #step2:
+  M_tilde11 <- H_tilde11%*%ginv(t(H_tilde11)%*%H_tilde11)%*%t(H_tilde11)
+  M_tilde12 <- H_tilde12%*%ginv(t(H_tilde12)%*%H_tilde12)%*%t(H_tilde12)
+  M_tilde13 <- H_tilde13%*%ginv(t(H_tilde13)%*%H_tilde13)%*%t(H_tilde13)
+  M_tilde21 <- H_tilde21%*%ginv(t(H_tilde21)%*%H_tilde21)%*%t(H_tilde21)
+  M_tilde22 <- H_tilde22%*%ginv(t(H_tilde22)%*%H_tilde22)%*%t(H_tilde22)
+  M_tilde23 <- H_tilde23%*%ginv(t(H_tilde23)%*%H_tilde23)%*%t(H_tilde23)
+  theta_bar11 <- ginv(t(Q_n1[,1:3])%*%(diag(n)-P)%*%M_tilde11%*%(diag(n)-P)%*%Q_n1[,1:3])%*%t(Q_n1[,1:3])%*%(diag(n)-P)%*%M_tilde11%*%(diag(n)-P)%*%Y_n1[,1]
+  theta_bar12 <- ginv(t(Q_n1[,4:6])%*%(diag(n)-P)%*%M_tilde12%*%(diag(n)-P)%*%Q_n1[,4:6])%*%t(Q_n1[,4:6])%*%(diag(n)-P)%*%M_tilde12%*%(diag(n)-P)%*%Y_n1[,2]
+  theta_bar13 <- ginv(t(Q_n1[,7:9])%*%(diag(n)-P)%*%M_tilde13%*%(diag(n)-P)%*%Q_n1[,7:9])%*%t(Q_n1[,7:9])%*%(diag(n)-P)%*%M_tilde13%*%(diag(n)-P)%*%Y_n1[,3]
+  theta_bar21 <- ginv(t(Q_n2[,1:3])%*%(diag(n)-P)%*%M_tilde21%*%(diag(n)-P)%*%Q_n2[,1:3])%*%t(Q_n2[,1:3])%*%(diag(n)-P)%*%M_tilde21%*%(diag(n)-P)%*%Y_n2[,1]
+  theta_bar22 <- ginv(t(Q_n2[,4:6])%*%(diag(n)-P)%*%M_tilde22%*%(diag(n)-P)%*%Q_n2[,4:6])%*%t(Q_n2[,4:6])%*%(diag(n)-P)%*%M_tilde22%*%(diag(n)-P)%*%Y_n2[,2]
+  theta_bar23 <- ginv(t(Q_n2[,7:9])%*%(diag(n)-P)%*%M_tilde23%*%(diag(n)-P)%*%Q_n2[,7:9])%*%t(Q_n2[,7:9])%*%(diag(n)-P)%*%M_tilde23%*%(diag(n)-P)%*%Y_n2[,3]
+  alpha_bar11 <- ginv(t(Phi)%*%Phi)%*%t(Phi)%*%(Y_n1[,1]-Q_n1[,1:3]%*%theta_bar11)
+  alpha_bar12 <- ginv(t(Phi)%*%Phi)%*%t(Phi)%*%(Y_n1[,2]-Q_n1[,4:6]%*%theta_bar12)
+  alpha_bar13 <- ginv(t(Phi)%*%Phi)%*%t(Phi)%*%(Y_n1[,3]-Q_n1[,7:9]%*%theta_bar13)
+  alpha_bar21 <- ginv(t(Phi)%*%Phi)%*%t(Phi)%*%(Y_n2[,1]-Q_n2[,1:3]%*%theta_bar21)
+  alpha_bar22 <- ginv(t(Phi)%*%Phi)%*%t(Phi)%*%(Y_n2[,2]-Q_n2[,4:6]%*%theta_bar22)
+  alpha_bar23 <- ginv(t(Phi)%*%Phi)%*%t(Phi)%*%(Y_n2[,3]-Q_n2[,7:9]%*%theta_bar23)
+  H11 <- cbind(W_n%*%ginv(diag(n)-theta_bar11[1]*W_n)%*%(Phi%*%alpha_bar11+Z_n%*%theta_bar11[2:3]),Z_n)
+  H12 <- cbind(W_n%*%ginv(diag(n)-theta_bar12[1]*W_n)%*%(Phi%*%alpha_bar12+Z_n%*%theta_bar12[2:3]),Z_n)
+  H13 <- cbind(W_n%*%ginv(diag(n)-theta_bar13[1]*W_n)%*%(Phi%*%alpha_bar13+Z_n%*%theta_bar13[2:3]),Z_n)
+  H21 <- cbind(W_n%*%ginv(diag(n)-theta_bar21[1]*W_n)%*%(Phi%*%alpha_bar21+Z_n%*%theta_bar21[2:3]),Z_n)
+  H22 <- cbind(W_n%*%ginv(diag(n)-theta_bar22[1]*W_n)%*%(Phi%*%alpha_bar22+Z_n%*%theta_bar22[2:3]),Z_n)
+  H23 <- cbind(W_n%*%ginv(diag(n)-theta_bar23[1]*W_n)%*%(Phi%*%alpha_bar23+Z_n%*%theta_bar23[2:3]),Z_n)
+  M11 <- H11%*%ginv(t(H11)%*%H11)%*%t(H11)
+  M12 <- H12%*%ginv(t(H12)%*%H12)%*%t(H12)
+  M13 <- H13%*%ginv(t(H13)%*%H13)%*%t(H13)
+  M21 <- H21%*%ginv(t(H21)%*%H21)%*%t(H21)
+  M22 <- H22%*%ginv(t(H22)%*%H22)%*%t(H22)
+  M23 <- H23%*%ginv(t(H23)%*%H23)%*%t(H23)
+  theta_hat11 <- ginv(t(Q_n1[,1:3])%*%(diag(n)-P)%*%M11%*%(diag(n)-P)%*%Q_n1[,1:3])%*%t(Q_n1[,1:3])%*%(diag(n)-P)%*%M11%*%(diag(n)-P)%*%Y_n1[,1]
+  theta_hat12 <- ginv(t(Q_n1[,4:6])%*%(diag(n)-P)%*%M12%*%(diag(n)-P)%*%Q_n1[,4:6])%*%t(Q_n1[,4:6])%*%(diag(n)-P)%*%M12%*%(diag(n)-P)%*%Y_n1[,2]
+  theta_hat13 <- ginv(t(Q_n1[,7:9])%*%(diag(n)-P)%*%M13%*%(diag(n)-P)%*%Q_n1[,7:9])%*%t(Q_n1[,7:9])%*%(diag(n)-P)%*%M13%*%(diag(n)-P)%*%Y_n1[,3]
+  theta_hat21 <- ginv(t(Q_n2[,1:3])%*%(diag(n)-P)%*%M21%*%(diag(n)-P)%*%Q_n2[,1:3])%*%t(Q_n2[,1:3])%*%(diag(n)-P)%*%M21%*%(diag(n)-P)%*%Y_n2[,1]
+  theta_hat22 <- ginv(t(Q_n2[,4:6])%*%(diag(n)-P)%*%M22%*%(diag(n)-P)%*%Q_n2[,4:6])%*%t(Q_n2[,4:6])%*%(diag(n)-P)%*%M22%*%(diag(n)-P)%*%Y_n2[,2]
+  theta_hat23 <- ginv(t(Q_n2[,7:9])%*%(diag(n)-P)%*%M23%*%(diag(n)-P)%*%Q_n2[,7:9])%*%t(Q_n2[,7:9])%*%(diag(n)-P)%*%M23%*%(diag(n)-P)%*%Y_n2[,3]
+  alpha_hat11 <- ginv(t(Phi)%*%Phi)%*%t(Phi)%*%(Y_n1[,1]-Q_n1[,1:3]%*%theta_hat11)
+  alpha_hat12 <- ginv(t(Phi)%*%Phi)%*%t(Phi)%*%(Y_n1[,2]-Q_n1[,4:6]%*%theta_hat12)
+  alpha_hat13 <- ginv(t(Phi)%*%Phi)%*%t(Phi)%*%(Y_n1[,3]-Q_n1[,7:9]%*%theta_hat13)  
+  alpha_hat21 <- ginv(t(Phi)%*%Phi)%*%t(Phi)%*%(Y_n2[,1]-Q_n2[,1:3]%*%theta_hat21)
+  alpha_hat22 <- ginv(t(Phi)%*%Phi)%*%t(Phi)%*%(Y_n2[,2]-Q_n2[,4:6]%*%theta_hat22)
+  alpha_hat23 <- ginv(t(Phi)%*%Phi)%*%t(Phi)%*%(Y_n2[,3]-Q_n2[,7:9]%*%theta_hat23)  
+ 
+  theta_hat1 <- cbind(theta_hat11,theta_hat12,theta_hat13)
+  theta_hat2 <- cbind(theta_hat21,theta_hat22,theta_hat23)
+  alpha_hat1 <- cbind(alpha_hat11,alpha_hat12,alpha_hat12)
+  alpha_hat2 <- cbind(alpha_hat21,alpha_hat22,alpha_hat22)
+  
+  return(list(theta_hat1=theta_hat1,theta_hat2=theta_hat2,alpha_hat1=alpha_hat1,alpha_hat2=alpha_hat2))
+}
+
+#################################################################
+#Calculate test statistics
+#################################################################
+TS <- function(Y_n1,Y_n2,W_n,Z_n,X_nt,theta_hat1,theta_hat2,Phi,alpha_hat1,alpha_hat2,n,T,h_2_tilde)
+{
+  varepsilon_hat11 <- Y_n1[,1]-theta_hat1[1,1]*W_n%*%Y_n1[,1]-Z_n%*%theta_hat1[2:3,1]-Phi%*%alpha_hat1[,1]
+  varepsilon_hat12 <- Y_n1[,2]-theta_hat1[1,2]*W_n%*%Y_n1[,2]-Z_n%*%theta_hat1[2:3,2]-Phi%*%alpha_hat1[,2]
+  varepsilon_hat13 <- Y_n1[,3]-theta_hat1[1,3]*W_n%*%Y_n1[,3]-Z_n%*%theta_hat1[2:3,3]-Phi%*%alpha_hat1[,3]
+  varepsilon_hat21 <- Y_n2[,1]-theta_hat2[1,1]*W_n%*%Y_n2[,1]-Z_n%*%theta_hat2[2:3,1]-Phi%*%alpha_hat2[,1]
+  varepsilon_hat22 <- Y_n2[,2]-theta_hat2[1,2]*W_n%*%Y_n2[,2]-Z_n%*%theta_hat2[2:3,2]-Phi%*%alpha_hat2[,2]
+  varepsilon_hat23 <- Y_n2[,3]-theta_hat2[1,3]*W_n%*%Y_n2[,3]-Z_n%*%theta_hat2[2:3,3]-Phi%*%alpha_hat2[,3]
+  varepsilon_hat1 <- cbind(varepsilon_hat11,varepsilon_hat12,varepsilon_hat13)
+  varepsilon_hat2 <- cbind(varepsilon_hat21,varepsilon_hat22,varepsilon_hat23)
+  h_mod11 <- sum(h_2_tilde^2)+sum((theta_hat1[2:3,1])^2)
+  h_mod12 <- sum(h_2_tilde^2)+sum((theta_hat1[2:3,2])^2)
+  h_mod13 <- sum(h_2_tilde^2)+sum((theta_hat1[2:3,3])^2)
+  h_mod21 <- sum(h_2_tilde^2)+sum((theta_hat2[2:3,1])^2)
+  h_mod22 <- sum(h_2_tilde^2)+sum((theta_hat2[2:3,2])^2)
+  h_mod23 <- sum(h_2_tilde^2)+sum((theta_hat2[2:3,3])^2)
+  h_11 <- theta_hat1[2:3,1]/sqrt(h_mod11)
+  h_12 <- theta_hat1[2:3,2]/sqrt(h_mod12)
+  h_13 <- theta_hat1[2:3,3]/sqrt(h_mod13)
+  h_21 <- theta_hat2[2:3,1]/sqrt(h_mod21)
+  h_22 <- theta_hat2[2:3,2]/sqrt(h_mod22)
+  h_23 <- theta_hat2[2:3,3]/sqrt(h_mod23)
+  h_211 <- h_2_tilde/sqrt(h_mod11)
+  h_212 <- h_2_tilde/sqrt(h_mod12)
+  h_213 <- h_2_tilde/sqrt(h_mod13)
+  h_221 <- h_2_tilde/sqrt(h_mod21)
+  h_222 <- h_2_tilde/sqrt(h_mod22)
+  h_223 <- h_2_tilde/sqrt(h_mod23)  
+  Uh11 <- Z_n%*%h_11+X_nt%*%h_211/100
+  Uh12 <- Z_n%*%h_12+X_nt%*%h_212/100
+  Uh13 <- Z_n%*%h_13+X_nt%*%h_213/100
+  Uh21 <- Z_n%*%h_21+X_nt%*%h_221/100
+  Uh22 <- Z_n%*%h_22+X_nt%*%h_222/100
+  Uh23 <- Z_n%*%h_23+X_nt%*%h_223/100
+  u <- runif(100)
+  CRn_hat11 <- rep(0,100)
+  CRn_hat12 <- rep(0,100)
+  CRn_hat13 <- rep(0,100)
+  CRn_hat21 <- rep(0,100)
+  CRn_hat22 <- rep(0,100)
+  CRn_hat23 <- rep(0,100)
+  for(i in 1:100)
+  { 
+    sum11 <- 0
+	sum12 <- 0
+	sum13 <- 0
+    sum21 <- 0
+	sum22 <- 0
+	sum23 <- 0
+    for(j in 1:n)
+	{
+	  sum11 <- sum11+varepsilon_hat11[j]*ifelse(Uh11[j]<=u[i],1,0)
+	  sum12 <- sum12+varepsilon_hat12[j]*ifelse(Uh12[j]<=u[i],1,0)
+	  sum13 <- sum13+varepsilon_hat13[j]*ifelse(Uh13[j]<=u[i],1,0)
+	  sum21 <- sum21+varepsilon_hat21[j]*ifelse(Uh21[j]<=u[i],1,0)
+	  sum22 <- sum22+varepsilon_hat22[j]*ifelse(Uh22[j]<=u[i],1,0)
+	  sum23 <- sum23+varepsilon_hat23[j]*ifelse(Uh23[j]<=u[i],1,0)
+	}
+    CRn_hat11[i] <- sum11
+	CRn_hat12[i] <- sum12
+	CRn_hat13[i] <- sum13
+    CRn_hat21[i] <- sum21
+	CRn_hat22[i] <- sum22
+	CRn_hat23[i] <- sum23
+  }
+  CT_n11 <- sum(CRn_hat11^2)/100
+  CT_n12 <- sum(CRn_hat12^2)/100
+  CT_n13 <- sum(CRn_hat13^2)/100
+  CT_n21 <- sum(CRn_hat21^2)/100
+  CT_n22 <- sum(CRn_hat22^2)/100
+  CT_n23 <- sum(CRn_hat23^2)/100
+  CT_n1 <- cbind(CT_n11,CT_n12,CT_n13)
+  CT_n2 <- cbind(CT_n21,CT_n22,CT_n23)
+    
+  return(list(varepsilon_hat1=varepsilon_hat1,varepsilon_hat2=varepsilon_hat2,CT_n1=CT_n1,CT_n2=CT_n2)) 
+}
+
+#################################################################
+#Bootstrap procedure
+#################################################################
+bootstrap_test <- function(varepsilon_hat1,varepsilon_hat2,CT_n1,CT_n2,n,Z_n,W_n,theta_hat1,theta_hat2,Phi,alpha_hat1,alpha_hat2,T,X_nt,h_2_tilde)
+{
+  #step1: obtain varepsilon_hat and CT_n
+  #step2: 
+  varepsilon <- rnorm(n,0,1)
+  varepsilon_star11 <- varepsilon_hat1[,1]*varepsilon
+  varepsilon_star12 <- varepsilon_hat1[,2]*varepsilon
+  varepsilon_star13 <- varepsilon_hat1[,3]*varepsilon
+  varepsilon_star21 <- varepsilon_hat2[,1]*varepsilon
+  varepsilon_star22 <- varepsilon_hat2[,2]*varepsilon
+  varepsilon_star23 <- varepsilon_hat2[,3]*varepsilon
+  Y_star11 <- ginv(diag(n)-theta_hat1[1,1]*W_n)%*%(Z_n%*%theta_hat1[2:3,1]-Phi%*%alpha_hat1[,1]+varepsilon_star11)
+  Y_star12 <- ginv(diag(n)-theta_hat1[1,2]*W_n)%*%(Z_n%*%theta_hat1[2:3,2]-Phi%*%alpha_hat1[,2]+varepsilon_star12)
+  Y_star13 <- ginv(diag(n)-theta_hat1[1,3]*W_n)%*%(Z_n%*%theta_hat1[2:3,3]-Phi%*%alpha_hat1[,3]+varepsilon_star13)
+  Y_star21 <- ginv(diag(n)-theta_hat2[1,1]*W_n)%*%(Z_n%*%theta_hat2[2:3,1]-Phi%*%alpha_hat2[,1]+varepsilon_star21)
+  Y_star22 <- ginv(diag(n)-theta_hat2[1,2]*W_n)%*%(Z_n%*%theta_hat2[2:3,1]-Phi%*%alpha_hat2[,2]+varepsilon_star22)
+  Y_star23 <- ginv(diag(n)-theta_hat2[1,3]*W_n)%*%(Z_n%*%theta_hat2[2:3,1]-Phi%*%alpha_hat2[,3]+varepsilon_star23)
+  Y_star1 <- cbind(Y_star11,Y_star12,Y_star13)
+  Y_star2 <- cbind(Y_star21,Y_star22,Y_star23)
+  #step3:
+  pavalue <- thetaalpha_hat(Z_n,W_n,Y_star1,Y_star2,n,Phi)
+  theta_hat_star1 <- pavalue$theta_hat1
+  theta_hat_star2 <- pavalue$theta_hat2
+  alpha_hat_star1 <- pavalue$alpha_hat1
+  alpha_hat_star2 <- pavalue$alpha_hat2
+  varepsilon_hat_star11 <- Y_star1[,1]-theta_hat_star1[1,1]*W_n%*%Y_star1[,1]-Z_n%*%theta_hat_star1[2:3,1]-Phi%*%alpha_hat_star1[,1]
+  varepsilon_hat_star12 <- Y_star1[,2]-theta_hat_star1[1,2]*W_n%*%Y_star1[,2]-Z_n%*%theta_hat_star1[2:3,2]-Phi%*%alpha_hat_star1[,2]
+  varepsilon_hat_star13 <- Y_star1[,3]-theta_hat_star1[1,3]*W_n%*%Y_star1[,3]-Z_n%*%theta_hat_star1[2:3,3]-Phi%*%alpha_hat_star1[,3]
+  varepsilon_hat_star21 <- Y_star2[,1]-theta_hat_star2[1,1]*W_n%*%Y_star2[,1]-Z_n%*%theta_hat_star2[2:3,1]-Phi%*%alpha_hat_star2[,1]
+  varepsilon_hat_star22 <- Y_star2[,2]-theta_hat_star2[1,2]*W_n%*%Y_star2[,2]-Z_n%*%theta_hat_star2[2:3,2]-Phi%*%alpha_hat_star2[,2]
+  varepsilon_hat_star23 <- Y_star2[,3]-theta_hat_star2[1,3]*W_n%*%Y_star2[,3]-Z_n%*%theta_hat_star2[2:3,3]-Phi%*%alpha_hat_star2[,3]
+  #step4:
+  h_mod11 <- sum(h_2_tilde^2)+sum((theta_hat1[2:3,1])^2)
+  h_mod12 <- sum(h_2_tilde^2)+sum((theta_hat1[2:3,2])^2)
+  h_mod13 <- sum(h_2_tilde^2)+sum((theta_hat1[2:3,3])^2)
+  h_mod21 <- sum(h_2_tilde^2)+sum((theta_hat2[2:3,1])^2)
+  h_mod22 <- sum(h_2_tilde^2)+sum((theta_hat2[2:3,2])^2)
+  h_mod23 <- sum(h_2_tilde^2)+sum((theta_hat2[2:3,3])^2)
+  h_11 <- theta_hat1[2:3,1]/sqrt(h_mod11)
+  h_12 <- theta_hat1[2:3,2]/sqrt(h_mod12)
+  h_13 <- theta_hat1[2:3,3]/sqrt(h_mod13)
+  h_21 <- theta_hat2[2:3,1]/sqrt(h_mod21)
+  h_22 <- theta_hat2[2:3,2]/sqrt(h_mod22)
+  h_23 <- theta_hat2[2:3,3]/sqrt(h_mod23)
+  h_211 <- h_2_tilde/sqrt(h_mod11)
+  h_212 <- h_2_tilde/sqrt(h_mod12)
+  h_213 <- h_2_tilde/sqrt(h_mod13)
+  h_221 <- h_2_tilde/sqrt(h_mod21)
+  h_222 <- h_2_tilde/sqrt(h_mod22)
+  h_223 <- h_2_tilde/sqrt(h_mod23)  
+  Uh11 <- Z_n%*%h_11+X_nt%*%h_211/100
+  Uh12 <- Z_n%*%h_12+X_nt%*%h_212/100
+  Uh13 <- Z_n%*%h_13+X_nt%*%h_213/100
+  Uh21 <- Z_n%*%h_21+X_nt%*%h_221/100
+  Uh22 <- Z_n%*%h_22+X_nt%*%h_222/100
+  Uh23 <- Z_n%*%h_23+X_nt%*%h_223/100
+  u_star <- runif(100)
+  CRn_hat_star11 <- rep(0,100)
+  CRn_hat_star12 <- rep(0,100)
+  CRn_hat_star13 <- rep(0,100)
+  CRn_hat_star21 <- rep(0,100)
+  CRn_hat_star22 <- rep(0,100)
+  CRn_hat_star23 <- rep(0,100)
+  for(i in 1:100)
+  { 
+    sum11 <- 0
+	sum12 <- 0
+	sum13 <- 0
+    sum21 <- 0
+	sum22 <- 0
+	sum23 <- 0
+    for(j in 1:n)
+	{
+	  sum11 <- sum11+varepsilon_hat_star11[j]*ifelse(Uh11[j]<=u_star[i],1,0)
+	  sum12 <- sum12+varepsilon_hat_star12[j]*ifelse(Uh12[j]<=u_star[i],1,0)
+	  sum13 <- sum13+varepsilon_hat_star13[j]*ifelse(Uh13[j]<=u_star[i],1,0)
+	  sum21 <- sum21+varepsilon_hat_star21[j]*ifelse(Uh21[j]<=u_star[i],1,0)
+	  sum22 <- sum22+varepsilon_hat_star22[j]*ifelse(Uh22[j]<=u_star[i],1,0)
+	  sum23 <- sum23+varepsilon_hat_star23[j]*ifelse(Uh23[j]<=u_star[i],1,0)
+	}
+    CRn_hat_star11[i] <- sum11
+	CRn_hat_star12[i] <- sum12
+	CRn_hat_star13[i] <- sum13
+    CRn_hat_star21[i] <- sum21
+	CRn_hat_star22[i] <- sum22
+	CRn_hat_star23[i] <- sum23
+  }
+  CT_n_star11 <- sum(CRn_hat_star11^2)/100
+  CT_n_star12 <- sum(CRn_hat_star12^2)/100
+  CT_n_star13 <- sum(CRn_hat_star13^2)/100
+  CT_n_star21 <- sum(CRn_hat_star21^2)/100
+  CT_n_star22 <- sum(CRn_hat_star22^2)/100
+  CT_n_star23 <- sum(CRn_hat_star23^2)/100
+  CT_n_star1 <- cbind(CT_n_star11,CT_n_star12,CT_n_star13)
+  CT_n_star2 <- cbind(CT_n_star21,CT_n_star22,CT_n_star23)  
+  
+  return(list(CT_n_star1=CT_n_star1,CT_n_star2=CT_n_star2))  
+}
+
+
+
+#################################################################
+#Data generating processes
+#################################################################
+generate_data <- function(R,m,n,T) 
+{
+  rho <- c(0.25,0.5,0.75)
+  
+  #Generating weight matrix
+  I_R <- diag(R)
+  I_m <- diag(m)#weight
+  l_m <- rep(1,m)#vector
+  B_m <- (l_m%*%t(l_m)-I_m)/(m-1) 
+  W_n <- kronecker(I_R,B_m)
+
+  #Generates a multivariate normal distribution Z_1
+  mean_vector <- rep(0,2) #mean vector
+  cov_matrix <- diag(2) #Covariance matrix 
+  Z_n <- mvrnorm(n,mean_vector,cov_matrix) #Generate multivariate normal distribution of random numbers
+  
+  #Generate a multivariate uniform distribution Z_2
+  #Z_2 <- matrix(runif(n*3),ncol=3)
+
+  #Functional data part
+  t <- runif(T)
+  gamma_t1 <- sqrt(2)*sin(pi*t/2)+3*sqrt(2)*sin(3*pi*t/2)
+  #gamma_t2 <- sin(pi*t/2)+sin(3*pi*t/2)/2+sin(5*pi*t/2)/4
+  lambda <- (((1:100)-0.5)*pi)^(-2)
+  r <- rep(0,100)
+  phi_t <- matrix(0,100,T)
+  X_nt <- matrix(0,n,T)
+  for(i in 1:n)
+  {
+    for(j in 1:100)
+    { 
+      r[j] <- rnorm(1,0,sqrt(lambda[j]))
+      phi_t[j,] <- sqrt(2)*sin((j-0.5)*pi*t)
+    }
+    X_nt[i,] <- t(r)%*%phi_t
+  }
+  
+  Fun_data1 <- X_nt%*%gamma_t1/T
+  #Fun_data2 <- X_nt%*%gamma_t2/T
+
+  #Generate error term
+  varepsilon_1 <- rnorm(n,0,1)
+  varepsilon_2 <- sqrt(2)*(1+Z_n[,1])*varepsilon_1
+  Y_n1 <- matrix(0,n,3)
+  Y_n2 <- matrix(0,n,3)
+  for(i in 1:3)
+  {
+    Y_n1[,i] <- ginv(diag(n)-rho[i]*W_n)%*%(Z_n[,1]+Z_n[,2]+Fun_data1+varepsilon_1)
+    Y_n2[,i] <- ginv(diag(n)-rho[i]*W_n)%*%(Z_n[,1]+Z_n[,2]+Fun_data1+varepsilon_2) 
+  }
+  return(list(W_n=W_n,Z_n=Z_n,X_nt=X_nt,Y_n1=Y_n1,Y_n2=Y_n2))
+}
+
+###################################################################
+# main function 
+###################################################################
+main <- function(K,B)
+{
+  m <- 5
+  R <- 30
+  n = m*R
+  #d = 0
+  T = 100
+  alpha <- c(0.01,0.05,0.1)
+  CT_n1 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  CT_n2 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  CT_n_star1  <- matrix(rep(0,3*B),nrow=B,ncol=3)
+  CT_n_star2  <- matrix(rep(0,3*B),nrow=B,ncol=3)
+  p_star1 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  p_star2 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count11 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count12 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count13 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count21 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count22 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count23 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_rate1 <- rep(0,3)
+  reject_rate2 <- rep(0,3)
+  
+  set.seed(54321)
+  ###################################################################
+  # begin of cycle
+  ###################################################################
+  for(k in 1:K)
+  {
+	print(paste("正在进行第",k,"/1000次循环"))
+    data <- generate_data(R,m,n,T)
+    W_n <- data$W_n
+    Z_n <- data$Z_n
+    X_nt <- data$X_nt
+    Y_n1 <- data$Y_n1
+	Y_n2 <- data$Y_n2
+    vec <- phi_hat(X_nt,n,T)
+    Phi <- vec$Phi
+    h_2_tilde <- vec$h_2_tilde
+    thetaalpha <- thetaalpha_hat(Z_n,W_n,Y_n1,Y_n2,n,Phi,T)
+    theta_hat1 <- thetaalpha$theta_hat1
+	theta_hat2 <- thetaalpha$theta_hat2
+    alpha_hat1 <- thetaalpha$alpha_hat1
+	alpha_hat2 <- thetaalpha$alpha_hat2
+    TEST <- TS(Y_n1,Y_n2,W_n,Z_n,X_nt,theta_hat1,theta_hat2,Phi,alpha_hat1,alpha_hat2,n,T,h_2_tilde)
+    varepsilon_hat1 <- TEST$varepsilon_hat1
+	varepsilon_hat2 <- TEST$varepsilon_hat2
+    CT_n1[k,] <- TEST$CT_n1
+	CT_n2[k,] <- TEST$CT_n2
+    for(b in 1:B)
+    {
+	  CT_star <- bootstrap_test(varepsilon_hat1,varepsilon_hat2,CT_n1,CT_n2,n,Z_n,W_n,theta_hat1,theta_hat2,Phi,alpha_hat1,alpha_hat2,T,X_nt,h_2_tilde)
+      CT_n_star1[b,] <- CT_star$CT_n_star1
+	  CT_n_star2[b,] <- CT_star$CT_n_star2
+    }
+
+	for(i in 1:3)
+	{
+      p_star1[k,i] <- mean(ifelse(CT_n_star1[,i]>CT_n1[k,i],1,0))
+	  p_star2[k,i] <- mean(ifelse(CT_n_star2[,i]>CT_n2[k,i],1,0))
+	  if(p_star1[k,i]<=alpha[1])
+	  {
+	    reject_count11[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count11[k,i] <-0
+	  }
+	  if(p_star1[k,i]<=alpha[2])
+	  {
+	    reject_count12[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count12[k,i] <-0
+	  }
+	  if(p_star1[k,i]<=alpha[3])
+	  {
+	    reject_count13[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count13[k,i] <-0
+	  }	
+	  if(p_star2[k,i]<=alpha[1])
+	  {
+	    reject_count21[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count21[k,i] <-0
+	  }
+	  if(p_star2[k,i]<=alpha[2])
+	  {
+	    reject_count22[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count22[k,i] <-0
+	  }
+	  if(p_star2[k,i]<=alpha[3])
+	  {
+	    reject_count23[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count23[k,i] <-0
+	  }
+	}
+  }
+  #####################################################################
+  # end of for cycle
+  #####################################################################
+  
+  #####################################################################
+  # summarize the simulation results
+  #####################################################################
+  reject_rate11 <- apply(reject_count11,2,mean)
+  reject_rate12 <- apply(reject_count12,2,mean)
+  reject_rate13 <- apply(reject_count13,2,mean)
+  reject_rate21 <- apply(reject_count21,2,mean)
+  reject_rate22 <- apply(reject_count22,2,mean)
+  reject_rate23 <- apply(reject_count23,2,mean)
+  reject_rate1 <- rbind(reject_rate11,reject_rate12,reject_rate13)
+  reject_rate2 <- rbind(reject_rate21,reject_rate22,reject_rate23)
+  return(list(reject_rate1=reject_rate1,reject_rate2=reject_rate2))
+}
+
+main(1000,500)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

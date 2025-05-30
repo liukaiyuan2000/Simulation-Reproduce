@@ -1,0 +1,2253 @@
+
+
+###################################################################
+# packages required
+###################################################################
+library(MASS)#Generates a multivariate normal distribution
+
+#################################################################
+#Calculate phi_hat and Phi
+#################################################################
+phi_hat <- function(X_nt1,X_nt2,X_nt3,X_nt4,X_nt5,X_nt6,n,T)
+{
+  #Calculate phi_hat
+  K_hat_st1 <- t(X_nt1)%*%X_nt1/(n[1]-1)
+  K_hat_st2 <- t(X_nt2)%*%X_nt2/(n[2]-1)
+  K_hat_st3 <- t(X_nt3)%*%X_nt3/(n[3]-1)
+  K_hat_st4 <- t(X_nt4)%*%X_nt4/(n[4]-1)
+  K_hat_st5 <- t(X_nt5)%*%X_nt5/(n[5]-1)
+  K_hat_st6 <- t(X_nt6)%*%X_nt6/(n[6]-1)
+  
+  #Spectral decomposition
+  eigen_decomp1 <- eigen(K_hat_st1)
+  eigen_decomp2 <- eigen(K_hat_st2)
+  eigen_decomp3 <- eigen(K_hat_st3)
+  eigen_decomp4 <- eigen(K_hat_st4)
+  eigen_decomp5 <- eigen(K_hat_st5)
+  eigen_decomp6 <- eigen(K_hat_st6)
+  
+  #Extract eigenvalue
+  eigenvalues1 <- eigen_decomp1$values
+  eigenvalues2 <- eigen_decomp2$values
+  eigenvalues3 <- eigen_decomp3$values
+  eigenvalues4 <- eigen_decomp4$values
+  eigenvalues5 <- eigen_decomp5$values
+  eigenvalues6 <- eigen_decomp6$values
+  
+  #Extract feature vector
+  eigenvectors1 <- eigen_decomp1$vectors
+  eigenvectors2 <- eigen_decomp2$vectors
+  eigenvectors3 <- eigen_decomp3$vectors
+  eigenvectors4 <- eigen_decomp4$vectors
+  eigenvectors5 <- eigen_decomp5$vectors
+  eigenvectors6 <- eigen_decomp6$vectors
+  
+  #Calculate the sum of the eigenvalues
+  total_variance1 <- sum(eigenvalues1)
+  total_variance2 <- sum(eigenvalues2)
+  total_variance3 <- sum(eigenvalues3)
+  total_variance4 <- sum(eigenvalues4)
+  total_variance5 <- sum(eigenvalues5)
+  total_variance6 <- sum(eigenvalues6)
+  
+  #Sort the eigenvalues by size
+  sorted_indices1 <- order(eigenvalues1,decreasing = TRUE)
+  sorted_indices2 <- order(eigenvalues2,decreasing = TRUE)
+  sorted_indices3 <- order(eigenvalues3,decreasing = TRUE)
+  sorted_indices4 <- order(eigenvalues4,decreasing = TRUE)
+  sorted_indices5 <- order(eigenvalues5,decreasing = TRUE)
+  sorted_indices6 <- order(eigenvalues6,decreasing = TRUE)
+  
+  sorted_eigenvalues1 <- eigenvalues1[sorted_indices1]
+  sorted_eigenvalues2 <- eigenvalues2[sorted_indices2]
+  sorted_eigenvalues3 <- eigenvalues3[sorted_indices3]
+  sorted_eigenvalues4 <- eigenvalues4[sorted_indices4]
+  sorted_eigenvalues5 <- eigenvalues5[sorted_indices5]
+  sorted_eigenvalues6 <- eigenvalues6[sorted_indices6]
+  sorted_eigenvectors1 <- eigenvectors1[, sorted_indices1]
+  sorted_eigenvectors2 <- eigenvectors2[, sorted_indices2]
+  sorted_eigenvectors3 <- eigenvectors3[, sorted_indices3]
+  sorted_eigenvectors4 <- eigenvectors4[, sorted_indices4]
+  sorted_eigenvectors5 <- eigenvectors5[, sorted_indices5]
+  sorted_eigenvectors6 <- eigenvectors6[, sorted_indices6]
+  
+  #Calculate the cumulative proportion of eigenvalues
+  variance_ratio1 <- cumsum(sorted_eigenvalues1)/total_variance1
+  variance_ratio2 <- cumsum(sorted_eigenvalues2)/total_variance2
+  variance_ratio3 <- cumsum(sorted_eigenvalues3)/total_variance3
+  variance_ratio4 <- cumsum(sorted_eigenvalues4)/total_variance4
+  variance_ratio5 <- cumsum(sorted_eigenvalues5)/total_variance5
+  variance_ratio6 <- cumsum(sorted_eigenvalues6)/total_variance6
+  
+  #Select the eigenvalues with a cumulative proportion of not less than 95%
+  selected_indices1 <- min(which(variance_ratio1>=0.95))
+  selected_indices2 <- min(which(variance_ratio2>=0.95))
+  selected_indices3 <- min(which(variance_ratio3>=0.95))
+  selected_indices4 <- min(which(variance_ratio4>=0.95))
+  selected_indices5 <- min(which(variance_ratio5>=0.95))
+  selected_indices6 <- min(which(variance_ratio6>=0.95))
+  
+  #sorted_eigenvalues[selected_indices]
+  lambda_hat1 <- sorted_eigenvalues1[1:selected_indices1]
+  lambda_hat2 <- sorted_eigenvalues2[1:selected_indices2]
+  lambda_hat3 <- sorted_eigenvalues3[1:selected_indices3]
+  lambda_hat4 <- sorted_eigenvalues4[1:selected_indices4]
+  lambda_hat5 <- sorted_eigenvalues5[1:selected_indices5]
+  lambda_hat6 <- sorted_eigenvalues6[1:selected_indices6]
+  
+  #sorted_eigenvectors[,selected_indices]
+  phi1 <- sorted_eigenvectors1[,1:selected_indices1]
+  phi2 <- sorted_eigenvectors2[,1:selected_indices2]
+  phi3 <- sorted_eigenvectors3[,1:selected_indices3]
+  phi4 <- sorted_eigenvectors4[,1:selected_indices4]
+  phi5 <- sorted_eigenvectors5[,1:selected_indices5]
+  phi6 <- sorted_eigenvectors6[,1:selected_indices6]
+  
+  r <- 0.95
+  
+  cumulative_variance1 <- cumsum(sorted_eigenvalues1^2)/sum(sorted_eigenvalues1^2)
+  cumulative_variance2 <- cumsum(sorted_eigenvalues2^2)/sum(sorted_eigenvalues2^2)
+  cumulative_variance3 <- cumsum(sorted_eigenvalues3^2)/sum(sorted_eigenvalues3^2)
+  cumulative_variance4 <- cumsum(sorted_eigenvalues4^2)/sum(sorted_eigenvalues4^2)
+  cumulative_variance5 <- cumsum(sorted_eigenvalues5^2)/sum(sorted_eigenvalues5^2)
+  cumulative_variance6 <- cumsum(sorted_eigenvalues6^2)/sum(sorted_eigenvalues6^2)
+  
+  j_n1 <- min(which(cumulative_variance1>=r))
+  j_n2 <- min(which(cumulative_variance2>=r))
+  j_n3 <- min(which(cumulative_variance3>=r))
+  j_n4 <- min(which(cumulative_variance4>=r))
+  j_n5 <- min(which(cumulative_variance5>=r))
+  j_n6 <- min(which(cumulative_variance6>=r))
+  
+  eta1 <- rep(0,j_n1)
+  eta2 <- rep(0,j_n2)
+  eta3 <- rep(0,j_n3)
+  eta4 <- rep(0,j_n4)
+  eta5 <- rep(0,j_n5)
+  eta6 <- rep(0,j_n6)
+  
+  h_2_tilde1 <- rep(0,100) 
+  h_2_tilde2 <- rep(0,100)
+  h_2_tilde3 <- rep(0,100)
+  h_2_tilde4 <- rep(0,100)
+  h_2_tilde5 <- rep(0,100)
+  h_2_tilde6 <- rep(0,100)
+  
+  for(i in 1:j_n1)
+  {
+    eta1[i] <- rnorm(1,0,sqrt(lambda_hat1[j_n1]))
+	h_2_tilde1 <- h_2_tilde1+eta1[i]*sorted_eigenvectors1[,i]
+  }
+  for(i in 1:j_n2)
+  {
+    eta2[i] <- rnorm(1,0,sqrt(lambda_hat2[j_n2]))
+	h_2_tilde2 <- h_2_tilde2+eta2[i]*sorted_eigenvectors2[,i]
+  }
+  for(i in 1:j_n3)
+  {
+    eta3[i] <- rnorm(1,0,sqrt(lambda_hat3[j_n1]))
+	h_2_tilde3 <- h_2_tilde3+eta3[i]*sorted_eigenvectors3[,i]
+  }
+  for(i in 1:j_n4)
+  {
+    eta4[i] <- rnorm(1,0,sqrt(lambda_hat4[j_n4]))
+	h_2_tilde4 <- h_2_tilde4+eta4[i]*sorted_eigenvectors4[,i]
+  }
+  for(i in 1:j_n5)
+  {
+    eta5[i] <- rnorm(1,0,sqrt(lambda_hat5[j_n5]))
+	h_2_tilde5 <- h_2_tilde5+eta5[i]*sorted_eigenvectors5[,i]
+  }
+  for(i in 1:j_n6)
+  {
+    eta6[i] <- rnorm(1,0,sqrt(lambda_hat6[j_n6]))
+	h_2_tilde6 <- h_2_tilde6+eta6[i]*sorted_eigenvectors6[,i]
+  }  
+  
+  #Calculate Phi
+  Phi1 <- X_nt1%*%phi1/T
+  Phi2 <- X_nt2%*%phi2/T
+  Phi3 <- X_nt3%*%phi3/T
+  Phi4 <- X_nt4%*%phi4/T
+  Phi5 <- X_nt5%*%phi5/T
+  Phi6 <- X_nt6%*%phi6/T
+  
+  return(list(Phi1=Phi1,Phi2=Phi2,Phi3=Phi3,Phi4=Phi4,Phi5=Phi5,Phi6=Phi6,h_2_tilde1=h_2_tilde1,h_2_tilde2=h_2_tilde2,h_2_tilde3=h_2_tilde3,h_2_tilde4=h_2_tilde4,h_2_tilde5=h_2_tilde5,h_2_tilde6=h_2_tilde6))
+}
+
+#################################################################
+#Calculate theta_hat
+#################################################################
+thetaalpha_hat <- function(Z_n1,Z_n2,Z_n3,Z_n4,Z_n5,Z_n6,W_n1,W_n2,W_n3,W_n4,W_n5,W_n6,Y_n11,Y_n12,Y_n21,Y_n22,Y_n31,Y_n32,Y_n41,Y_n42,Y_n51,Y_n52,Y_n61,Y_n62,n,Phi1,Phi2,Phi3,Phi4,Phi5,Phi6,T)
+{
+  #Calculate Q_n
+  Q_n11 <- cbind(W_n1%*%Y_n11[,1],Z_n1,W_n1%*%Y_n11[,2],Z_n1,W_n1%*%Y_n11[,3],Z_n1)
+  Q_n12 <- cbind(W_n1%*%Y_n12[,1],Z_n1,W_n1%*%Y_n12[,2],Z_n1,W_n1%*%Y_n12[,3],Z_n1)
+  Q_n21 <- cbind(W_n2%*%Y_n21[,1],Z_n2,W_n2%*%Y_n21[,2],Z_n2,W_n2%*%Y_n21[,3],Z_n2)
+  Q_n22 <- cbind(W_n2%*%Y_n22[,1],Z_n2,W_n2%*%Y_n22[,2],Z_n2,W_n2%*%Y_n22[,3],Z_n2)
+  Q_n31 <- cbind(W_n3%*%Y_n31[,1],Z_n3,W_n3%*%Y_n31[,2],Z_n3,W_n3%*%Y_n31[,3],Z_n3)
+  Q_n32 <- cbind(W_n3%*%Y_n32[,1],Z_n3,W_n3%*%Y_n32[,2],Z_n3,W_n3%*%Y_n32[,3],Z_n3)
+  Q_n41 <- cbind(W_n4%*%Y_n41[,1],Z_n4,W_n4%*%Y_n41[,2],Z_n4,W_n4%*%Y_n41[,3],Z_n4)
+  Q_n42 <- cbind(W_n4%*%Y_n42[,1],Z_n4,W_n4%*%Y_n42[,2],Z_n4,W_n4%*%Y_n42[,3],Z_n4)
+  Q_n51 <- cbind(W_n5%*%Y_n51[,1],Z_n5,W_n5%*%Y_n51[,2],Z_n5,W_n5%*%Y_n51[,3],Z_n5)
+  Q_n52 <- cbind(W_n5%*%Y_n52[,1],Z_n5,W_n5%*%Y_n52[,2],Z_n5,W_n5%*%Y_n52[,3],Z_n5)
+  Q_n61 <- cbind(W_n6%*%Y_n61[,1],Z_n6,W_n6%*%Y_n61[,2],Z_n6,W_n6%*%Y_n61[,3],Z_n6)
+  Q_n62 <- cbind(W_n6%*%Y_n62[,1],Z_n6,W_n6%*%Y_n62[,2],Z_n6,W_n6%*%Y_n62[,3],Z_n6)
+  P1 <- Phi1%*%ginv(t(Phi1)%*%Phi1)%*%t(Phi1)
+  P2 <- Phi2%*%ginv(t(Phi2)%*%Phi2)%*%t(Phi2)
+  P3 <- Phi3%*%ginv(t(Phi3)%*%Phi3)%*%t(Phi3)
+  P4 <- Phi4%*%ginv(t(Phi4)%*%Phi4)%*%t(Phi4)
+  P5 <- Phi5%*%ginv(t(Phi5)%*%Phi5)%*%t(Phi5)
+  P6 <- Phi6%*%ginv(t(Phi6)%*%Phi6)%*%t(Phi6)
+
+  ######2sls###
+  #step1:
+  Q_np11 <- cbind(Q_n11[,1:3]%*%ginv(t(Q_n11[,1:3])%*%Q_n11[,1:3])%*%t(Q_n11[,1:3]),Q_n11[,4:6]%*%ginv(t(Q_n11[,4:6])%*%Q_n11[,4:6])%*%t(Q_n11[,4:6]),Q_n11[,7:9]%*%ginv(t(Q_n11[,7:9])%*%Q_n11[,7:9])%*%t(Q_n11[,7:9]))
+  Q_np12 <- cbind(Q_n12[,1:3]%*%ginv(t(Q_n12[,1:3])%*%Q_n12[,1:3])%*%t(Q_n12[,1:3]),Q_n12[,4:6]%*%ginv(t(Q_n12[,4:6])%*%Q_n12[,4:6])%*%t(Q_n12[,4:6]),Q_n12[,7:9]%*%ginv(t(Q_n12[,7:9])%*%Q_n12[,7:9])%*%t(Q_n12[,7:9]))
+  Q_np21 <- cbind(Q_n21[,1:3]%*%ginv(t(Q_n21[,1:3])%*%Q_n21[,1:3])%*%t(Q_n21[,1:3]),Q_n21[,4:6]%*%ginv(t(Q_n21[,4:6])%*%Q_n21[,4:6])%*%t(Q_n21[,4:6]),Q_n21[,7:9]%*%ginv(t(Q_n21[,7:9])%*%Q_n21[,7:9])%*%t(Q_n21[,7:9]))
+  Q_np22 <- cbind(Q_n22[,1:3]%*%ginv(t(Q_n22[,1:3])%*%Q_n22[,1:3])%*%t(Q_n22[,1:3]),Q_n22[,4:6]%*%ginv(t(Q_n22[,4:6])%*%Q_n22[,4:6])%*%t(Q_n22[,4:6]),Q_n22[,7:9]%*%ginv(t(Q_n22[,7:9])%*%Q_n22[,7:9])%*%t(Q_n22[,7:9]))
+  Q_np31 <- cbind(Q_n31[,1:3]%*%ginv(t(Q_n31[,1:3])%*%Q_n31[,1:3])%*%t(Q_n31[,1:3]),Q_n31[,4:6]%*%ginv(t(Q_n31[,4:6])%*%Q_n31[,4:6])%*%t(Q_n31[,4:6]),Q_n31[,7:9]%*%ginv(t(Q_n31[,7:9])%*%Q_n31[,7:9])%*%t(Q_n31[,7:9]))
+  Q_np32 <- cbind(Q_n32[,1:3]%*%ginv(t(Q_n32[,1:3])%*%Q_n32[,1:3])%*%t(Q_n32[,1:3]),Q_n32[,4:6]%*%ginv(t(Q_n32[,4:6])%*%Q_n32[,4:6])%*%t(Q_n32[,4:6]),Q_n32[,7:9]%*%ginv(t(Q_n32[,7:9])%*%Q_n32[,7:9])%*%t(Q_n32[,7:9]))
+  Q_np41 <- cbind(Q_n41[,1:3]%*%ginv(t(Q_n41[,1:3])%*%Q_n41[,1:3])%*%t(Q_n41[,1:3]),Q_n41[,4:6]%*%ginv(t(Q_n41[,4:6])%*%Q_n41[,4:6])%*%t(Q_n41[,4:6]),Q_n41[,7:9]%*%ginv(t(Q_n41[,7:9])%*%Q_n41[,7:9])%*%t(Q_n41[,7:9]))
+  Q_np42 <- cbind(Q_n42[,1:3]%*%ginv(t(Q_n42[,1:3])%*%Q_n42[,1:3])%*%t(Q_n42[,1:3]),Q_n42[,4:6]%*%ginv(t(Q_n42[,4:6])%*%Q_n42[,4:6])%*%t(Q_n42[,4:6]),Q_n42[,7:9]%*%ginv(t(Q_n42[,7:9])%*%Q_n42[,7:9])%*%t(Q_n42[,7:9]))
+  Q_np51 <- cbind(Q_n51[,1:3]%*%ginv(t(Q_n51[,1:3])%*%Q_n51[,1:3])%*%t(Q_n51[,1:3]),Q_n51[,4:6]%*%ginv(t(Q_n51[,4:6])%*%Q_n51[,4:6])%*%t(Q_n51[,4:6]),Q_n51[,7:9]%*%ginv(t(Q_n51[,7:9])%*%Q_n51[,7:9])%*%t(Q_n51[,7:9]))
+  Q_np52 <- cbind(Q_n52[,1:3]%*%ginv(t(Q_n52[,1:3])%*%Q_n52[,1:3])%*%t(Q_n52[,1:3]),Q_n52[,4:6]%*%ginv(t(Q_n52[,4:6])%*%Q_n52[,4:6])%*%t(Q_n52[,4:6]),Q_n52[,7:9]%*%ginv(t(Q_n52[,7:9])%*%Q_n52[,7:9])%*%t(Q_n52[,7:9]))
+  Q_np61 <- cbind(Q_n61[,1:3]%*%ginv(t(Q_n61[,1:3])%*%Q_n61[,1:3])%*%t(Q_n61[,1:3]),Q_n61[,4:6]%*%ginv(t(Q_n61[,4:6])%*%Q_n61[,4:6])%*%t(Q_n61[,4:6]),Q_n61[,7:9]%*%ginv(t(Q_n61[,7:9])%*%Q_n61[,7:9])%*%t(Q_n61[,7:9]))
+  Q_np62 <- cbind(Q_n62[,1:3]%*%ginv(t(Q_n62[,1:3])%*%Q_n62[,1:3])%*%t(Q_n62[,1:3]),Q_n62[,4:6]%*%ginv(t(Q_n62[,4:6])%*%Q_n62[,4:6])%*%t(Q_n62[,4:6]),Q_n62[,7:9]%*%ginv(t(Q_n62[,7:9])%*%Q_n62[,7:9])%*%t(Q_n62[,7:9]))
+  para_tilde111 <- ginv(rbind(t(W_n1%*%Y_n11[,1]),t(Z_n1),t(Phi1))%*%Q_np11[,1:150]%*%cbind(W_n1%*%Y_n11[,1],Z_n1,Phi1))%*%rbind(t(W_n1%*%Y_n11[,1]),t(Z_n1),t(Phi1))%*%Q_np11[,1:150]%*%Y_n11[,1]
+  para_tilde112 <- ginv(rbind(t(W_n1%*%Y_n11[,2]),t(Z_n1),t(Phi1))%*%Q_np11[,151:300]%*%cbind(W_n1%*%Y_n11[,2],Z_n1,Phi1))%*%rbind(t(W_n1%*%Y_n11[,2]),t(Z_n1),t(Phi1))%*%Q_np11[,151:300]%*%Y_n11[,2]
+  para_tilde113 <- ginv(rbind(t(W_n1%*%Y_n11[,3]),t(Z_n1),t(Phi1))%*%Q_np11[,301:450]%*%cbind(W_n1%*%Y_n11[,3],Z_n1,Phi1))%*%rbind(t(W_n1%*%Y_n11[,3]),t(Z_n1),t(Phi1))%*%Q_np11[,301:450]%*%Y_n11[,3]
+  para_tilde121 <- ginv(rbind(t(W_n1%*%Y_n12[,1]),t(Z_n1),t(Phi1))%*%Q_np12[,1:150]%*%cbind(W_n1%*%Y_n12[,1],Z_n1,Phi1))%*%rbind(t(W_n1%*%Y_n12[,1]),t(Z_n1),t(Phi1))%*%Q_np12[,1:150]%*%Y_n12[,1]
+  para_tilde122 <- ginv(rbind(t(W_n1%*%Y_n12[,2]),t(Z_n1),t(Phi1))%*%Q_np12[,151:300]%*%cbind(W_n1%*%Y_n12[,2],Z_n1,Phi1))%*%rbind(t(W_n1%*%Y_n12[,2]),t(Z_n1),t(Phi1))%*%Q_np12[,151:300]%*%Y_n12[,2]
+  para_tilde123 <- ginv(rbind(t(W_n1%*%Y_n12[,3]),t(Z_n1),t(Phi1))%*%Q_np12[,301:450]%*%cbind(W_n1%*%Y_n12[,3],Z_n1,Phi1))%*%rbind(t(W_n1%*%Y_n12[,3]),t(Z_n1),t(Phi1))%*%Q_np12[,301:450]%*%Y_n12[,3]
+  para_tilde211 <- ginv(rbind(t(W_n2%*%Y_n21[,1]),t(Z_n2),t(Phi2))%*%Q_np21[,1:200]%*%cbind(W_n2%*%Y_n21[,1],Z_n2,Phi2))%*%rbind(t(W_n2%*%Y_n21[,1]),t(Z_n2),t(Phi2))%*%Q_np21[,1:200]%*%Y_n21[,1]
+  para_tilde212 <- ginv(rbind(t(W_n2%*%Y_n21[,2]),t(Z_n2),t(Phi2))%*%Q_np21[,201:400]%*%cbind(W_n2%*%Y_n21[,2],Z_n2,Phi2))%*%rbind(t(W_n2%*%Y_n21[,2]),t(Z_n2),t(Phi2))%*%Q_np21[,201:400]%*%Y_n21[,2]
+  para_tilde213 <- ginv(rbind(t(W_n2%*%Y_n21[,3]),t(Z_n2),t(Phi2))%*%Q_np21[,401:600]%*%cbind(W_n2%*%Y_n21[,3],Z_n2,Phi2))%*%rbind(t(W_n2%*%Y_n21[,3]),t(Z_n2),t(Phi2))%*%Q_np21[,401:600]%*%Y_n21[,3]
+  para_tilde221 <- ginv(rbind(t(W_n2%*%Y_n22[,1]),t(Z_n2),t(Phi2))%*%Q_np22[,1:200]%*%cbind(W_n2%*%Y_n22[,1],Z_n2,Phi2))%*%rbind(t(W_n2%*%Y_n22[,1]),t(Z_n2),t(Phi2))%*%Q_np22[,1:200]%*%Y_n22[,1]
+  para_tilde222 <- ginv(rbind(t(W_n2%*%Y_n22[,2]),t(Z_n2),t(Phi2))%*%Q_np22[,201:400]%*%cbind(W_n2%*%Y_n22[,2],Z_n2,Phi2))%*%rbind(t(W_n2%*%Y_n22[,2]),t(Z_n2),t(Phi2))%*%Q_np22[,201:400]%*%Y_n22[,2]
+  para_tilde223 <- ginv(rbind(t(W_n2%*%Y_n22[,3]),t(Z_n2),t(Phi2))%*%Q_np22[,401:600]%*%cbind(W_n2%*%Y_n22[,3],Z_n2,Phi2))%*%rbind(t(W_n2%*%Y_n22[,3]),t(Z_n2),t(Phi2))%*%Q_np22[,401:600]%*%Y_n22[,3]
+  para_tilde311 <- ginv(rbind(t(W_n3%*%Y_n31[,1]),t(Z_n3),t(Phi3))%*%Q_np31[,1:250]%*%cbind(W_n3%*%Y_n31[,1],Z_n3,Phi3))%*%rbind(t(W_n3%*%Y_n31[,1]),t(Z_n3),t(Phi3))%*%Q_np31[,1:250]%*%Y_n31[,1]
+  para_tilde312 <- ginv(rbind(t(W_n3%*%Y_n31[,2]),t(Z_n3),t(Phi3))%*%Q_np31[,251:500]%*%cbind(W_n3%*%Y_n31[,2],Z_n3,Phi3))%*%rbind(t(W_n3%*%Y_n31[,2]),t(Z_n3),t(Phi3))%*%Q_np31[,251:500]%*%Y_n31[,2]
+  para_tilde313 <- ginv(rbind(t(W_n3%*%Y_n31[,3]),t(Z_n3),t(Phi3))%*%Q_np31[,501:750]%*%cbind(W_n3%*%Y_n31[,3],Z_n3,Phi3))%*%rbind(t(W_n3%*%Y_n31[,3]),t(Z_n3),t(Phi3))%*%Q_np31[,501:750]%*%Y_n31[,3]
+  para_tilde321 <- ginv(rbind(t(W_n3%*%Y_n32[,1]),t(Z_n3),t(Phi3))%*%Q_np32[,1:250]%*%cbind(W_n3%*%Y_n32[,1],Z_n3,Phi3))%*%rbind(t(W_n3%*%Y_n32[,1]),t(Z_n3),t(Phi3))%*%Q_np32[,1:250]%*%Y_n32[,1]
+  para_tilde322 <- ginv(rbind(t(W_n3%*%Y_n32[,2]),t(Z_n3),t(Phi3))%*%Q_np32[,251:500]%*%cbind(W_n3%*%Y_n32[,2],Z_n3,Phi3))%*%rbind(t(W_n3%*%Y_n32[,2]),t(Z_n3),t(Phi3))%*%Q_np32[,251:500]%*%Y_n32[,2]
+  para_tilde323 <- ginv(rbind(t(W_n3%*%Y_n32[,3]),t(Z_n3),t(Phi3))%*%Q_np32[,501:750]%*%cbind(W_n3%*%Y_n32[,3],Z_n3,Phi3))%*%rbind(t(W_n3%*%Y_n32[,3]),t(Z_n3),t(Phi3))%*%Q_np32[,501:750]%*%Y_n32[,3]
+  para_tilde411 <- ginv(rbind(t(W_n4%*%Y_n41[,1]),t(Z_n4),t(Phi4))%*%Q_np41[,1:240]%*%cbind(W_n4%*%Y_n41[,1],Z_n4,Phi4))%*%rbind(t(W_n4%*%Y_n41[,1]),t(Z_n4),t(Phi4))%*%Q_np41[,1:240]%*%Y_n41[,1]
+  para_tilde412 <- ginv(rbind(t(W_n4%*%Y_n41[,2]),t(Z_n4),t(Phi4))%*%Q_np41[,241:480]%*%cbind(W_n4%*%Y_n41[,2],Z_n4,Phi4))%*%rbind(t(W_n4%*%Y_n41[,2]),t(Z_n4),t(Phi4))%*%Q_np41[,241:480]%*%Y_n41[,2]
+  para_tilde413 <- ginv(rbind(t(W_n4%*%Y_n41[,3]),t(Z_n4),t(Phi4))%*%Q_np41[,481:720]%*%cbind(W_n4%*%Y_n41[,3],Z_n4,Phi4))%*%rbind(t(W_n4%*%Y_n41[,3]),t(Z_n4),t(Phi4))%*%Q_np41[,481:720]%*%Y_n41[,3]
+  para_tilde421 <- ginv(rbind(t(W_n4%*%Y_n42[,1]),t(Z_n4),t(Phi4))%*%Q_np42[,1:240]%*%cbind(W_n4%*%Y_n42[,1],Z_n4,Phi4))%*%rbind(t(W_n4%*%Y_n42[,1]),t(Z_n4),t(Phi4))%*%Q_np42[,1:240]%*%Y_n42[,1]
+  para_tilde422 <- ginv(rbind(t(W_n4%*%Y_n42[,2]),t(Z_n4),t(Phi4))%*%Q_np42[,241:480]%*%cbind(W_n4%*%Y_n42[,2],Z_n4,Phi4))%*%rbind(t(W_n4%*%Y_n42[,2]),t(Z_n4),t(Phi4))%*%Q_np42[,241:480]%*%Y_n42[,2]
+  para_tilde423 <- ginv(rbind(t(W_n4%*%Y_n42[,3]),t(Z_n4),t(Phi4))%*%Q_np42[,481:720]%*%cbind(W_n4%*%Y_n42[,3],Z_n4,Phi4))%*%rbind(t(W_n4%*%Y_n42[,3]),t(Z_n4),t(Phi4))%*%Q_np42[,481:720]%*%Y_n42[,3]
+  para_tilde511 <- ginv(rbind(t(W_n5%*%Y_n51[,1]),t(Z_n5),t(Phi5))%*%Q_np51[,1:320]%*%cbind(W_n5%*%Y_n51[,1],Z_n5,Phi5))%*%rbind(t(W_n5%*%Y_n51[,1]),t(Z_n5),t(Phi5))%*%Q_np51[,1:320]%*%Y_n51[,1]
+  para_tilde512 <- ginv(rbind(t(W_n5%*%Y_n51[,2]),t(Z_n5),t(Phi5))%*%Q_np51[,321:640]%*%cbind(W_n5%*%Y_n51[,2],Z_n5,Phi5))%*%rbind(t(W_n5%*%Y_n51[,2]),t(Z_n5),t(Phi5))%*%Q_np51[,321:640]%*%Y_n51[,2]
+  para_tilde513 <- ginv(rbind(t(W_n5%*%Y_n51[,3]),t(Z_n5),t(Phi5))%*%Q_np51[,641:960]%*%cbind(W_n5%*%Y_n51[,3],Z_n5,Phi5))%*%rbind(t(W_n5%*%Y_n51[,3]),t(Z_n5),t(Phi5))%*%Q_np51[,641:960]%*%Y_n51[,3]
+  para_tilde521 <- ginv(rbind(t(W_n5%*%Y_n52[,1]),t(Z_n5),t(Phi5))%*%Q_np52[,1:320]%*%cbind(W_n5%*%Y_n52[,1],Z_n5,Phi5))%*%rbind(t(W_n5%*%Y_n52[,1]),t(Z_n5),t(Phi5))%*%Q_np52[,1:320]%*%Y_n52[,1]
+  para_tilde522 <- ginv(rbind(t(W_n5%*%Y_n52[,2]),t(Z_n5),t(Phi5))%*%Q_np52[,321:640]%*%cbind(W_n5%*%Y_n52[,2],Z_n5,Phi5))%*%rbind(t(W_n5%*%Y_n52[,2]),t(Z_n5),t(Phi5))%*%Q_np52[,321:640]%*%Y_n52[,2]
+  para_tilde523 <- ginv(rbind(t(W_n5%*%Y_n52[,3]),t(Z_n5),t(Phi5))%*%Q_np52[,641:960]%*%cbind(W_n5%*%Y_n52[,3],Z_n5,Phi5))%*%rbind(t(W_n5%*%Y_n52[,3]),t(Z_n5),t(Phi5))%*%Q_np52[,641:960]%*%Y_n52[,3]
+  para_tilde611 <- ginv(rbind(t(W_n6%*%Y_n61[,1]),t(Z_n6),t(Phi6))%*%Q_np61[,1:400]%*%cbind(W_n6%*%Y_n61[,1],Z_n6,Phi6))%*%rbind(t(W_n6%*%Y_n61[,1]),t(Z_n6),t(Phi6))%*%Q_np61[,1:400]%*%Y_n61[,1]
+  para_tilde612 <- ginv(rbind(t(W_n6%*%Y_n61[,2]),t(Z_n6),t(Phi6))%*%Q_np61[,401:800]%*%cbind(W_n6%*%Y_n61[,2],Z_n6,Phi6))%*%rbind(t(W_n6%*%Y_n61[,2]),t(Z_n6),t(Phi6))%*%Q_np61[,401:800]%*%Y_n61[,2]
+  para_tilde613 <- ginv(rbind(t(W_n6%*%Y_n61[,3]),t(Z_n6),t(Phi6))%*%Q_np61[,801:1200]%*%cbind(W_n6%*%Y_n61[,3],Z_n6,Phi6))%*%rbind(t(W_n6%*%Y_n61[,3]),t(Z_n6),t(Phi6))%*%Q_np61[,801:1200]%*%Y_n61[,3]
+  para_tilde621 <- ginv(rbind(t(W_n6%*%Y_n62[,1]),t(Z_n6),t(Phi6))%*%Q_np62[,1:400]%*%cbind(W_n6%*%Y_n62[,1],Z_n6,Phi6))%*%rbind(t(W_n6%*%Y_n62[,1]),t(Z_n6),t(Phi6))%*%Q_np62[,1:400]%*%Y_n62[,1]
+  para_tilde622 <- ginv(rbind(t(W_n6%*%Y_n62[,2]),t(Z_n6),t(Phi6))%*%Q_np62[,401:800]%*%cbind(W_n6%*%Y_n62[,2],Z_n6,Phi6))%*%rbind(t(W_n6%*%Y_n62[,2]),t(Z_n6),t(Phi6))%*%Q_np62[,401:800]%*%Y_n62[,2]
+  para_tilde623 <- ginv(rbind(t(W_n6%*%Y_n62[,3]),t(Z_n6),t(Phi6))%*%Q_np62[,801:1200]%*%cbind(W_n6%*%Y_n62[,3],Z_n6,Phi6))%*%rbind(t(W_n6%*%Y_n62[,3]),t(Z_n6),t(Phi6))%*%Q_np62[,801:1200]%*%Y_n62[,3]
+  H_tilde111 <- cbind(W_n1%*%ginv(diag(n[1])-para_tilde111[1]*W_n1)%*%cbind(Phi1*para_tilde111[4],Z_n1),Z_n1)
+  H_tilde112 <- cbind(W_n1%*%ginv(diag(n[1])-para_tilde112[1]*W_n1)%*%cbind(Phi1*para_tilde112[4],Z_n1),Z_n1)
+  H_tilde113 <- cbind(W_n1%*%ginv(diag(n[1])-para_tilde113[1]*W_n1)%*%cbind(Phi1*para_tilde113[4],Z_n1),Z_n1)
+  H_tilde121 <- cbind(W_n1%*%ginv(diag(n[1])-para_tilde121[1]*W_n1)%*%cbind(Phi1*para_tilde121[4],Z_n1),Z_n1)
+  H_tilde122 <- cbind(W_n1%*%ginv(diag(n[1])-para_tilde122[1]*W_n1)%*%cbind(Phi1*para_tilde122[4],Z_n1),Z_n1)
+  H_tilde123 <- cbind(W_n1%*%ginv(diag(n[1])-para_tilde123[1]*W_n1)%*%cbind(Phi1*para_tilde123[4],Z_n1),Z_n1)
+  H_tilde211 <- cbind(W_n2%*%ginv(diag(n[2])-para_tilde211[1]*W_n2)%*%cbind(Phi2*para_tilde211[4],Z_n2),Z_n2)
+  H_tilde212 <- cbind(W_n2%*%ginv(diag(n[2])-para_tilde212[1]*W_n2)%*%cbind(Phi2*para_tilde212[4],Z_n2),Z_n2)
+  H_tilde213 <- cbind(W_n2%*%ginv(diag(n[2])-para_tilde213[1]*W_n2)%*%cbind(Phi2*para_tilde213[4],Z_n2),Z_n2)
+  H_tilde221 <- cbind(W_n2%*%ginv(diag(n[2])-para_tilde221[1]*W_n2)%*%cbind(Phi2*para_tilde221[4],Z_n2),Z_n2)
+  H_tilde222 <- cbind(W_n2%*%ginv(diag(n[2])-para_tilde222[1]*W_n2)%*%cbind(Phi2*para_tilde222[4],Z_n2),Z_n2)
+  H_tilde223 <- cbind(W_n2%*%ginv(diag(n[2])-para_tilde223[1]*W_n2)%*%cbind(Phi2*para_tilde223[4],Z_n2),Z_n2)
+  H_tilde311 <- cbind(W_n3%*%ginv(diag(n[3])-para_tilde311[1]*W_n3)%*%cbind(Phi3*para_tilde311[4],Z_n3),Z_n3)
+  H_tilde312 <- cbind(W_n3%*%ginv(diag(n[3])-para_tilde312[1]*W_n3)%*%cbind(Phi3*para_tilde312[4],Z_n3),Z_n3)
+  H_tilde313 <- cbind(W_n3%*%ginv(diag(n[3])-para_tilde313[1]*W_n3)%*%cbind(Phi3*para_tilde313[4],Z_n3),Z_n3)
+  H_tilde321 <- cbind(W_n3%*%ginv(diag(n[3])-para_tilde321[1]*W_n3)%*%cbind(Phi3*para_tilde321[4],Z_n3),Z_n3)
+  H_tilde322 <- cbind(W_n3%*%ginv(diag(n[3])-para_tilde322[1]*W_n3)%*%cbind(Phi3*para_tilde322[4],Z_n3),Z_n3)
+  H_tilde323 <- cbind(W_n3%*%ginv(diag(n[3])-para_tilde323[1]*W_n3)%*%cbind(Phi3*para_tilde323[4],Z_n3),Z_n3)
+  H_tilde411 <- cbind(W_n4%*%ginv(diag(n[4])-para_tilde411[1]*W_n4)%*%cbind(Phi4*para_tilde411[4],Z_n4),Z_n4)
+  H_tilde412 <- cbind(W_n4%*%ginv(diag(n[4])-para_tilde412[1]*W_n4)%*%cbind(Phi4*para_tilde412[4],Z_n4),Z_n4)
+  H_tilde413 <- cbind(W_n4%*%ginv(diag(n[4])-para_tilde413[1]*W_n4)%*%cbind(Phi4*para_tilde413[4],Z_n4),Z_n4)
+  H_tilde421 <- cbind(W_n4%*%ginv(diag(n[4])-para_tilde421[1]*W_n4)%*%cbind(Phi4*para_tilde421[4],Z_n4),Z_n4)
+  H_tilde422 <- cbind(W_n4%*%ginv(diag(n[4])-para_tilde422[1]*W_n4)%*%cbind(Phi4*para_tilde422[4],Z_n4),Z_n4)
+  H_tilde423 <- cbind(W_n4%*%ginv(diag(n[4])-para_tilde423[1]*W_n4)%*%cbind(Phi4*para_tilde423[4],Z_n4),Z_n4)
+  H_tilde511 <- cbind(W_n5%*%ginv(diag(n[5])-para_tilde511[1]*W_n5)%*%cbind(Phi5*para_tilde511[4],Z_n5),Z_n5)
+  H_tilde512 <- cbind(W_n5%*%ginv(diag(n[5])-para_tilde512[1]*W_n5)%*%cbind(Phi5*para_tilde512[4],Z_n5),Z_n5)
+  H_tilde513 <- cbind(W_n5%*%ginv(diag(n[5])-para_tilde513[1]*W_n5)%*%cbind(Phi5*para_tilde513[4],Z_n5),Z_n5)
+  H_tilde521 <- cbind(W_n5%*%ginv(diag(n[5])-para_tilde521[1]*W_n5)%*%cbind(Phi5*para_tilde521[4],Z_n5),Z_n5)
+  H_tilde522 <- cbind(W_n5%*%ginv(diag(n[5])-para_tilde522[1]*W_n5)%*%cbind(Phi5*para_tilde522[4],Z_n5),Z_n5)
+  H_tilde523 <- cbind(W_n5%*%ginv(diag(n[5])-para_tilde523[1]*W_n5)%*%cbind(Phi5*para_tilde523[4],Z_n5),Z_n5)
+  H_tilde611 <- cbind(W_n6%*%ginv(diag(n[6])-para_tilde611[1]*W_n6)%*%cbind(Phi6*para_tilde611[4],Z_n6),Z_n6)
+  H_tilde612 <- cbind(W_n6%*%ginv(diag(n[6])-para_tilde612[1]*W_n6)%*%cbind(Phi6*para_tilde612[4],Z_n6),Z_n6)
+  H_tilde613 <- cbind(W_n6%*%ginv(diag(n[6])-para_tilde613[1]*W_n6)%*%cbind(Phi6*para_tilde613[4],Z_n6),Z_n6)
+  H_tilde621 <- cbind(W_n6%*%ginv(diag(n[6])-para_tilde621[1]*W_n6)%*%cbind(Phi6*para_tilde621[4],Z_n6),Z_n6)
+  H_tilde622 <- cbind(W_n6%*%ginv(diag(n[6])-para_tilde622[1]*W_n6)%*%cbind(Phi6*para_tilde622[4],Z_n6),Z_n6)
+  H_tilde623 <- cbind(W_n6%*%ginv(diag(n[6])-para_tilde623[1]*W_n6)%*%cbind(Phi6*para_tilde623[4],Z_n6),Z_n6)
+
+  #step2:
+  M_tilde111 <- H_tilde111%*%ginv(t(H_tilde111)%*%H_tilde111)%*%t(H_tilde111)
+  M_tilde112 <- H_tilde112%*%ginv(t(H_tilde112)%*%H_tilde112)%*%t(H_tilde112)
+  M_tilde113 <- H_tilde113%*%ginv(t(H_tilde113)%*%H_tilde113)%*%t(H_tilde113)
+  M_tilde121 <- H_tilde121%*%ginv(t(H_tilde121)%*%H_tilde121)%*%t(H_tilde121)
+  M_tilde122 <- H_tilde122%*%ginv(t(H_tilde122)%*%H_tilde122)%*%t(H_tilde122)
+  M_tilde123 <- H_tilde123%*%ginv(t(H_tilde123)%*%H_tilde123)%*%t(H_tilde123)
+  M_tilde211 <- H_tilde211%*%ginv(t(H_tilde211)%*%H_tilde211)%*%t(H_tilde211)
+  M_tilde212 <- H_tilde212%*%ginv(t(H_tilde212)%*%H_tilde212)%*%t(H_tilde212)
+  M_tilde213 <- H_tilde213%*%ginv(t(H_tilde213)%*%H_tilde213)%*%t(H_tilde213)
+  M_tilde221 <- H_tilde221%*%ginv(t(H_tilde221)%*%H_tilde221)%*%t(H_tilde221)
+  M_tilde222 <- H_tilde222%*%ginv(t(H_tilde222)%*%H_tilde222)%*%t(H_tilde222)
+  M_tilde223 <- H_tilde223%*%ginv(t(H_tilde223)%*%H_tilde223)%*%t(H_tilde223)
+  M_tilde311 <- H_tilde311%*%ginv(t(H_tilde311)%*%H_tilde311)%*%t(H_tilde311)
+  M_tilde312 <- H_tilde312%*%ginv(t(H_tilde312)%*%H_tilde312)%*%t(H_tilde312)
+  M_tilde313 <- H_tilde313%*%ginv(t(H_tilde313)%*%H_tilde313)%*%t(H_tilde313)
+  M_tilde321 <- H_tilde321%*%ginv(t(H_tilde321)%*%H_tilde321)%*%t(H_tilde321)
+  M_tilde322 <- H_tilde322%*%ginv(t(H_tilde322)%*%H_tilde322)%*%t(H_tilde322)
+  M_tilde323 <- H_tilde323%*%ginv(t(H_tilde323)%*%H_tilde323)%*%t(H_tilde323)
+  M_tilde411 <- H_tilde411%*%ginv(t(H_tilde411)%*%H_tilde411)%*%t(H_tilde411)
+  M_tilde412 <- H_tilde412%*%ginv(t(H_tilde412)%*%H_tilde412)%*%t(H_tilde412)
+  M_tilde413 <- H_tilde413%*%ginv(t(H_tilde413)%*%H_tilde413)%*%t(H_tilde413)
+  M_tilde421 <- H_tilde421%*%ginv(t(H_tilde421)%*%H_tilde421)%*%t(H_tilde421)
+  M_tilde422 <- H_tilde422%*%ginv(t(H_tilde422)%*%H_tilde422)%*%t(H_tilde422)
+  M_tilde423 <- H_tilde423%*%ginv(t(H_tilde423)%*%H_tilde423)%*%t(H_tilde423)
+  M_tilde511 <- H_tilde511%*%ginv(t(H_tilde511)%*%H_tilde511)%*%t(H_tilde511)
+  M_tilde512 <- H_tilde512%*%ginv(t(H_tilde512)%*%H_tilde512)%*%t(H_tilde512)
+  M_tilde513 <- H_tilde513%*%ginv(t(H_tilde513)%*%H_tilde513)%*%t(H_tilde513)
+  M_tilde521 <- H_tilde521%*%ginv(t(H_tilde521)%*%H_tilde521)%*%t(H_tilde521)
+  M_tilde522 <- H_tilde522%*%ginv(t(H_tilde522)%*%H_tilde522)%*%t(H_tilde522)
+  M_tilde523 <- H_tilde523%*%ginv(t(H_tilde523)%*%H_tilde523)%*%t(H_tilde523)
+  M_tilde611 <- H_tilde611%*%ginv(t(H_tilde611)%*%H_tilde611)%*%t(H_tilde611)
+  M_tilde612 <- H_tilde612%*%ginv(t(H_tilde612)%*%H_tilde612)%*%t(H_tilde612)
+  M_tilde613 <- H_tilde613%*%ginv(t(H_tilde613)%*%H_tilde613)%*%t(H_tilde613)
+  M_tilde621 <- H_tilde621%*%ginv(t(H_tilde621)%*%H_tilde621)%*%t(H_tilde621)
+  M_tilde622 <- H_tilde622%*%ginv(t(H_tilde622)%*%H_tilde622)%*%t(H_tilde622)
+  M_tilde623 <- H_tilde623%*%ginv(t(H_tilde623)%*%H_tilde623)%*%t(H_tilde623)
+  theta_bar111 <- ginv(t(Q_n11[,1:3])%*%(diag(n[1])-P1)%*%M_tilde111%*%(diag(n[1])-P1)%*%Q_n11[,1:3])%*%t(Q_n11[,1:3])%*%(diag(n[1])-P1)%*%M_tilde111%*%(diag(n[1])-P1)%*%Y_n11[,1]
+  theta_bar112 <- ginv(t(Q_n11[,4:6])%*%(diag(n[1])-P1)%*%M_tilde112%*%(diag(n[1])-P1)%*%Q_n11[,4:6])%*%t(Q_n11[,4:6])%*%(diag(n[1])-P1)%*%M_tilde112%*%(diag(n[1])-P1)%*%Y_n11[,2]
+  theta_bar113 <- ginv(t(Q_n11[,7:9])%*%(diag(n[1])-P1)%*%M_tilde113%*%(diag(n[1])-P1)%*%Q_n11[,7:9])%*%t(Q_n11[,7:9])%*%(diag(n[1])-P1)%*%M_tilde113%*%(diag(n[1])-P1)%*%Y_n11[,3]
+  theta_bar121 <- ginv(t(Q_n12[,1:3])%*%(diag(n[1])-P1)%*%M_tilde121%*%(diag(n[1])-P1)%*%Q_n12[,1:3])%*%t(Q_n12[,1:3])%*%(diag(n[1])-P1)%*%M_tilde121%*%(diag(n[1])-P1)%*%Y_n12[,1]
+  theta_bar122 <- ginv(t(Q_n12[,4:6])%*%(diag(n[1])-P1)%*%M_tilde122%*%(diag(n[1])-P1)%*%Q_n12[,4:6])%*%t(Q_n12[,4:6])%*%(diag(n[1])-P1)%*%M_tilde122%*%(diag(n[1])-P1)%*%Y_n12[,2]
+  theta_bar123 <- ginv(t(Q_n12[,7:9])%*%(diag(n[1])-P1)%*%M_tilde123%*%(diag(n[1])-P1)%*%Q_n12[,7:9])%*%t(Q_n12[,7:9])%*%(diag(n[1])-P1)%*%M_tilde123%*%(diag(n[1])-P1)%*%Y_n12[,3]
+  theta_bar211 <- ginv(t(Q_n21[,1:3])%*%(diag(n[2])-P2)%*%M_tilde211%*%(diag(n[2])-P2)%*%Q_n21[,1:3])%*%t(Q_n21[,1:3])%*%(diag(n[2])-P2)%*%M_tilde211%*%(diag(n[2])-P2)%*%Y_n21[,1]
+  theta_bar212 <- ginv(t(Q_n21[,4:6])%*%(diag(n[2])-P2)%*%M_tilde212%*%(diag(n[2])-P2)%*%Q_n21[,4:6])%*%t(Q_n21[,4:6])%*%(diag(n[2])-P2)%*%M_tilde212%*%(diag(n[2])-P2)%*%Y_n21[,2]
+  theta_bar213 <- ginv(t(Q_n21[,7:9])%*%(diag(n[2])-P2)%*%M_tilde213%*%(diag(n[2])-P2)%*%Q_n21[,7:9])%*%t(Q_n21[,7:9])%*%(diag(n[2])-P2)%*%M_tilde213%*%(diag(n[2])-P2)%*%Y_n21[,3]
+  theta_bar221 <- ginv(t(Q_n22[,1:3])%*%(diag(n[2])-P2)%*%M_tilde221%*%(diag(n[2])-P2)%*%Q_n22[,1:3])%*%t(Q_n22[,1:3])%*%(diag(n[2])-P2)%*%M_tilde221%*%(diag(n[2])-P2)%*%Y_n22[,1]
+  theta_bar222 <- ginv(t(Q_n22[,4:6])%*%(diag(n[2])-P2)%*%M_tilde222%*%(diag(n[2])-P2)%*%Q_n22[,4:6])%*%t(Q_n22[,4:6])%*%(diag(n[2])-P2)%*%M_tilde222%*%(diag(n[2])-P2)%*%Y_n22[,2]
+  theta_bar223 <- ginv(t(Q_n22[,7:9])%*%(diag(n[2])-P2)%*%M_tilde223%*%(diag(n[2])-P2)%*%Q_n22[,7:9])%*%t(Q_n22[,7:9])%*%(diag(n[2])-P2)%*%M_tilde223%*%(diag(n[2])-P2)%*%Y_n22[,3]
+  theta_bar311 <- ginv(t(Q_n31[,1:3])%*%(diag(n[3])-P3)%*%M_tilde311%*%(diag(n[3])-P3)%*%Q_n31[,1:3])%*%t(Q_n31[,1:3])%*%(diag(n[3])-P3)%*%M_tilde311%*%(diag(n[3])-P3)%*%Y_n31[,1]
+  theta_bar312 <- ginv(t(Q_n31[,4:6])%*%(diag(n[3])-P3)%*%M_tilde312%*%(diag(n[3])-P3)%*%Q_n31[,4:6])%*%t(Q_n31[,4:6])%*%(diag(n[3])-P3)%*%M_tilde312%*%(diag(n[3])-P3)%*%Y_n31[,2]
+  theta_bar313 <- ginv(t(Q_n31[,7:9])%*%(diag(n[3])-P3)%*%M_tilde313%*%(diag(n[3])-P3)%*%Q_n31[,7:9])%*%t(Q_n31[,7:9])%*%(diag(n[3])-P3)%*%M_tilde313%*%(diag(n[3])-P3)%*%Y_n31[,3]
+  theta_bar321 <- ginv(t(Q_n32[,1:3])%*%(diag(n[3])-P3)%*%M_tilde321%*%(diag(n[3])-P3)%*%Q_n32[,1:3])%*%t(Q_n32[,1:3])%*%(diag(n[3])-P3)%*%M_tilde321%*%(diag(n[3])-P3)%*%Y_n32[,1]
+  theta_bar322 <- ginv(t(Q_n32[,4:6])%*%(diag(n[3])-P3)%*%M_tilde322%*%(diag(n[3])-P3)%*%Q_n32[,4:6])%*%t(Q_n32[,4:6])%*%(diag(n[3])-P3)%*%M_tilde322%*%(diag(n[3])-P3)%*%Y_n32[,2]
+  theta_bar323 <- ginv(t(Q_n32[,7:9])%*%(diag(n[3])-P3)%*%M_tilde323%*%(diag(n[3])-P3)%*%Q_n32[,7:9])%*%t(Q_n32[,7:9])%*%(diag(n[3])-P3)%*%M_tilde323%*%(diag(n[3])-P3)%*%Y_n32[,3]
+  theta_bar411 <- ginv(t(Q_n41[,1:3])%*%(diag(n[4])-P4)%*%M_tilde411%*%(diag(n[4])-P4)%*%Q_n41[,1:3])%*%t(Q_n41[,1:3])%*%(diag(n[4])-P4)%*%M_tilde411%*%(diag(n[4])-P4)%*%Y_n41[,1]
+  theta_bar412 <- ginv(t(Q_n41[,4:6])%*%(diag(n[4])-P4)%*%M_tilde412%*%(diag(n[4])-P4)%*%Q_n41[,4:6])%*%t(Q_n41[,4:6])%*%(diag(n[4])-P4)%*%M_tilde412%*%(diag(n[4])-P4)%*%Y_n41[,2]
+  theta_bar413 <- ginv(t(Q_n41[,7:9])%*%(diag(n[4])-P4)%*%M_tilde413%*%(diag(n[4])-P4)%*%Q_n41[,7:9])%*%t(Q_n41[,7:9])%*%(diag(n[4])-P4)%*%M_tilde413%*%(diag(n[4])-P4)%*%Y_n41[,3]
+  theta_bar421 <- ginv(t(Q_n42[,1:3])%*%(diag(n[4])-P4)%*%M_tilde421%*%(diag(n[4])-P4)%*%Q_n42[,1:3])%*%t(Q_n42[,1:3])%*%(diag(n[4])-P4)%*%M_tilde421%*%(diag(n[4])-P4)%*%Y_n42[,1]
+  theta_bar422 <- ginv(t(Q_n42[,4:6])%*%(diag(n[4])-P4)%*%M_tilde422%*%(diag(n[4])-P4)%*%Q_n42[,4:6])%*%t(Q_n42[,4:6])%*%(diag(n[4])-P4)%*%M_tilde422%*%(diag(n[4])-P4)%*%Y_n42[,2]
+  theta_bar423 <- ginv(t(Q_n42[,7:9])%*%(diag(n[4])-P4)%*%M_tilde423%*%(diag(n[4])-P4)%*%Q_n42[,7:9])%*%t(Q_n42[,7:9])%*%(diag(n[4])-P4)%*%M_tilde423%*%(diag(n[4])-P4)%*%Y_n42[,3]
+  theta_bar511 <- ginv(t(Q_n51[,1:3])%*%(diag(n[5])-P5)%*%M_tilde511%*%(diag(n[5])-P5)%*%Q_n51[,1:3])%*%t(Q_n51[,1:3])%*%(diag(n[5])-P5)%*%M_tilde511%*%(diag(n[5])-P5)%*%Y_n51[,1]
+  theta_bar512 <- ginv(t(Q_n51[,4:6])%*%(diag(n[5])-P5)%*%M_tilde512%*%(diag(n[5])-P5)%*%Q_n51[,4:6])%*%t(Q_n51[,4:6])%*%(diag(n[5])-P5)%*%M_tilde512%*%(diag(n[5])-P5)%*%Y_n51[,2]
+  theta_bar513 <- ginv(t(Q_n51[,7:9])%*%(diag(n[5])-P5)%*%M_tilde513%*%(diag(n[5])-P5)%*%Q_n51[,7:9])%*%t(Q_n51[,7:9])%*%(diag(n[5])-P5)%*%M_tilde513%*%(diag(n[5])-P5)%*%Y_n51[,3]
+  theta_bar521 <- ginv(t(Q_n52[,1:3])%*%(diag(n[5])-P5)%*%M_tilde521%*%(diag(n[5])-P5)%*%Q_n52[,1:3])%*%t(Q_n52[,1:3])%*%(diag(n[5])-P5)%*%M_tilde521%*%(diag(n[5])-P5)%*%Y_n52[,1]
+  theta_bar522 <- ginv(t(Q_n52[,4:6])%*%(diag(n[5])-P5)%*%M_tilde522%*%(diag(n[5])-P5)%*%Q_n52[,4:6])%*%t(Q_n52[,4:6])%*%(diag(n[5])-P5)%*%M_tilde522%*%(diag(n[5])-P5)%*%Y_n52[,2]
+  theta_bar523 <- ginv(t(Q_n52[,7:9])%*%(diag(n[5])-P5)%*%M_tilde523%*%(diag(n[5])-P5)%*%Q_n52[,7:9])%*%t(Q_n52[,7:9])%*%(diag(n[5])-P5)%*%M_tilde523%*%(diag(n[5])-P5)%*%Y_n52[,3]
+  theta_bar611 <- ginv(t(Q_n61[,1:3])%*%(diag(n[6])-P6)%*%M_tilde611%*%(diag(n[6])-P6)%*%Q_n61[,1:3])%*%t(Q_n61[,1:3])%*%(diag(n[6])-P6)%*%M_tilde611%*%(diag(n[6])-P6)%*%Y_n61[,1]
+  theta_bar612 <- ginv(t(Q_n61[,4:6])%*%(diag(n[6])-P6)%*%M_tilde612%*%(diag(n[6])-P6)%*%Q_n61[,4:6])%*%t(Q_n61[,4:6])%*%(diag(n[6])-P6)%*%M_tilde612%*%(diag(n[6])-P6)%*%Y_n61[,2]
+  theta_bar613 <- ginv(t(Q_n61[,7:9])%*%(diag(n[6])-P6)%*%M_tilde613%*%(diag(n[6])-P6)%*%Q_n61[,7:9])%*%t(Q_n61[,7:9])%*%(diag(n[6])-P6)%*%M_tilde613%*%(diag(n[6])-P6)%*%Y_n61[,3]
+  theta_bar621 <- ginv(t(Q_n62[,1:3])%*%(diag(n[6])-P6)%*%M_tilde621%*%(diag(n[6])-P6)%*%Q_n62[,1:3])%*%t(Q_n62[,1:3])%*%(diag(n[6])-P6)%*%M_tilde621%*%(diag(n[6])-P6)%*%Y_n62[,1]
+  theta_bar622 <- ginv(t(Q_n62[,4:6])%*%(diag(n[6])-P6)%*%M_tilde622%*%(diag(n[6])-P6)%*%Q_n62[,4:6])%*%t(Q_n62[,4:6])%*%(diag(n[6])-P6)%*%M_tilde622%*%(diag(n[6])-P6)%*%Y_n62[,2]
+  theta_bar623 <- ginv(t(Q_n62[,7:9])%*%(diag(n[6])-P6)%*%M_tilde623%*%(diag(n[6])-P6)%*%Q_n62[,7:9])%*%t(Q_n62[,7:9])%*%(diag(n[6])-P6)%*%M_tilde623%*%(diag(n[6])-P6)%*%Y_n62[,3]
+  alpha_bar111 <- ginv(t(Phi1)%*%Phi1)%*%t(Phi1)%*%(Y_n11[,1]-Q_n11[,1:3]%*%theta_bar111)
+  alpha_bar112 <- ginv(t(Phi1)%*%Phi1)%*%t(Phi1)%*%(Y_n11[,2]-Q_n11[,4:6]%*%theta_bar112)
+  alpha_bar113 <- ginv(t(Phi1)%*%Phi1)%*%t(Phi1)%*%(Y_n11[,3]-Q_n11[,7:9]%*%theta_bar113)
+  alpha_bar121 <- ginv(t(Phi1)%*%Phi1)%*%t(Phi1)%*%(Y_n12[,1]-Q_n12[,1:3]%*%theta_bar121)
+  alpha_bar122 <- ginv(t(Phi1)%*%Phi1)%*%t(Phi1)%*%(Y_n12[,2]-Q_n12[,4:6]%*%theta_bar122)
+  alpha_bar123 <- ginv(t(Phi1)%*%Phi1)%*%t(Phi1)%*%(Y_n12[,3]-Q_n12[,7:9]%*%theta_bar123)
+  alpha_bar211 <- ginv(t(Phi2)%*%Phi2)%*%t(Phi2)%*%(Y_n21[,1]-Q_n21[,1:3]%*%theta_bar211)
+  alpha_bar212 <- ginv(t(Phi2)%*%Phi2)%*%t(Phi2)%*%(Y_n21[,2]-Q_n21[,4:6]%*%theta_bar212)
+  alpha_bar213 <- ginv(t(Phi2)%*%Phi2)%*%t(Phi2)%*%(Y_n21[,3]-Q_n21[,7:9]%*%theta_bar213)
+  alpha_bar221 <- ginv(t(Phi2)%*%Phi2)%*%t(Phi2)%*%(Y_n22[,1]-Q_n22[,1:3]%*%theta_bar221)
+  alpha_bar222 <- ginv(t(Phi2)%*%Phi2)%*%t(Phi2)%*%(Y_n22[,2]-Q_n22[,4:6]%*%theta_bar222)
+  alpha_bar223 <- ginv(t(Phi2)%*%Phi2)%*%t(Phi2)%*%(Y_n22[,3]-Q_n22[,7:9]%*%theta_bar223)
+  alpha_bar311 <- ginv(t(Phi3)%*%Phi3)%*%t(Phi3)%*%(Y_n31[,1]-Q_n31[,1:3]%*%theta_bar311)
+  alpha_bar312 <- ginv(t(Phi3)%*%Phi3)%*%t(Phi3)%*%(Y_n31[,2]-Q_n31[,4:6]%*%theta_bar312)
+  alpha_bar313 <- ginv(t(Phi3)%*%Phi3)%*%t(Phi3)%*%(Y_n31[,3]-Q_n31[,7:9]%*%theta_bar313)
+  alpha_bar321 <- ginv(t(Phi3)%*%Phi3)%*%t(Phi3)%*%(Y_n32[,1]-Q_n32[,1:3]%*%theta_bar321)
+  alpha_bar322 <- ginv(t(Phi3)%*%Phi3)%*%t(Phi3)%*%(Y_n32[,2]-Q_n32[,4:6]%*%theta_bar322)
+  alpha_bar323 <- ginv(t(Phi3)%*%Phi3)%*%t(Phi3)%*%(Y_n32[,3]-Q_n32[,7:9]%*%theta_bar323)
+  alpha_bar411 <- ginv(t(Phi4)%*%Phi4)%*%t(Phi4)%*%(Y_n41[,1]-Q_n41[,1:3]%*%theta_bar411)
+  alpha_bar412 <- ginv(t(Phi4)%*%Phi4)%*%t(Phi4)%*%(Y_n41[,2]-Q_n41[,4:6]%*%theta_bar412)
+  alpha_bar413 <- ginv(t(Phi4)%*%Phi4)%*%t(Phi4)%*%(Y_n41[,3]-Q_n41[,7:9]%*%theta_bar413)
+  alpha_bar421 <- ginv(t(Phi4)%*%Phi4)%*%t(Phi4)%*%(Y_n42[,1]-Q_n42[,1:3]%*%theta_bar421)
+  alpha_bar422 <- ginv(t(Phi4)%*%Phi4)%*%t(Phi4)%*%(Y_n42[,2]-Q_n42[,4:6]%*%theta_bar422)
+  alpha_bar423 <- ginv(t(Phi4)%*%Phi4)%*%t(Phi4)%*%(Y_n42[,3]-Q_n42[,7:9]%*%theta_bar423)
+  alpha_bar511 <- ginv(t(Phi5)%*%Phi5)%*%t(Phi5)%*%(Y_n51[,1]-Q_n51[,1:3]%*%theta_bar511)
+  alpha_bar512 <- ginv(t(Phi5)%*%Phi5)%*%t(Phi5)%*%(Y_n51[,2]-Q_n51[,4:6]%*%theta_bar512)
+  alpha_bar513 <- ginv(t(Phi5)%*%Phi5)%*%t(Phi5)%*%(Y_n51[,3]-Q_n51[,7:9]%*%theta_bar513)
+  alpha_bar521 <- ginv(t(Phi5)%*%Phi5)%*%t(Phi5)%*%(Y_n52[,1]-Q_n52[,1:3]%*%theta_bar521)
+  alpha_bar522 <- ginv(t(Phi5)%*%Phi5)%*%t(Phi5)%*%(Y_n52[,2]-Q_n52[,4:6]%*%theta_bar522)
+  alpha_bar523 <- ginv(t(Phi5)%*%Phi5)%*%t(Phi5)%*%(Y_n52[,3]-Q_n52[,7:9]%*%theta_bar523)
+  alpha_bar611 <- ginv(t(Phi6)%*%Phi6)%*%t(Phi6)%*%(Y_n61[,1]-Q_n61[,1:3]%*%theta_bar611)
+  alpha_bar612 <- ginv(t(Phi6)%*%Phi6)%*%t(Phi6)%*%(Y_n61[,2]-Q_n61[,4:6]%*%theta_bar612)
+  alpha_bar613 <- ginv(t(Phi6)%*%Phi6)%*%t(Phi6)%*%(Y_n61[,3]-Q_n61[,7:9]%*%theta_bar613)
+  alpha_bar621 <- ginv(t(Phi6)%*%Phi6)%*%t(Phi6)%*%(Y_n62[,1]-Q_n62[,1:3]%*%theta_bar621)
+  alpha_bar622 <- ginv(t(Phi6)%*%Phi6)%*%t(Phi6)%*%(Y_n62[,2]-Q_n62[,4:6]%*%theta_bar622)
+  alpha_bar623 <- ginv(t(Phi6)%*%Phi6)%*%t(Phi6)%*%(Y_n62[,3]-Q_n62[,7:9]%*%theta_bar623)
+  
+
+  H111 <- cbind(W_n1%*%ginv(diag(n[1])-theta_bar111[1]*W_n1)%*%(Phi1%*%alpha_bar111+Z_n1%*%theta_bar111[2:3]),Z_n1)
+  H112 <- cbind(W_n1%*%ginv(diag(n[1])-theta_bar112[1]*W_n1)%*%(Phi1%*%alpha_bar112+Z_n1%*%theta_bar112[2:3]),Z_n1)
+  H113 <- cbind(W_n1%*%ginv(diag(n[1])-theta_bar113[1]*W_n1)%*%(Phi1%*%alpha_bar113+Z_n1%*%theta_bar113[2:3]),Z_n1)
+  H121 <- cbind(W_n1%*%ginv(diag(n[1])-theta_bar121[1]*W_n1)%*%(Phi1%*%alpha_bar121+Z_n1%*%theta_bar121[2:3]),Z_n1)
+  H122 <- cbind(W_n1%*%ginv(diag(n[1])-theta_bar122[1]*W_n1)%*%(Phi1%*%alpha_bar122+Z_n1%*%theta_bar122[2:3]),Z_n1)
+  H123 <- cbind(W_n1%*%ginv(diag(n[1])-theta_bar123[1]*W_n1)%*%(Phi1%*%alpha_bar123+Z_n1%*%theta_bar123[2:3]),Z_n1)
+  H211 <- cbind(W_n2%*%ginv(diag(n[2])-theta_bar211[1]*W_n2)%*%(Phi2%*%alpha_bar211+Z_n2%*%theta_bar211[2:3]),Z_n2)
+  H212 <- cbind(W_n2%*%ginv(diag(n[2])-theta_bar212[1]*W_n2)%*%(Phi2%*%alpha_bar212+Z_n2%*%theta_bar212[2:3]),Z_n2)
+  H213 <- cbind(W_n2%*%ginv(diag(n[2])-theta_bar213[1]*W_n2)%*%(Phi2%*%alpha_bar213+Z_n2%*%theta_bar213[2:3]),Z_n2)
+  H221 <- cbind(W_n2%*%ginv(diag(n[2])-theta_bar221[1]*W_n2)%*%(Phi2%*%alpha_bar221+Z_n2%*%theta_bar221[2:3]),Z_n2)
+  H222 <- cbind(W_n2%*%ginv(diag(n[2])-theta_bar222[1]*W_n2)%*%(Phi2%*%alpha_bar222+Z_n2%*%theta_bar222[2:3]),Z_n2)
+  H223 <- cbind(W_n2%*%ginv(diag(n[2])-theta_bar223[1]*W_n2)%*%(Phi2%*%alpha_bar223+Z_n2%*%theta_bar223[2:3]),Z_n2)
+  H311 <- cbind(W_n3%*%ginv(diag(n[3])-theta_bar311[1]*W_n3)%*%(Phi3%*%alpha_bar311+Z_n3%*%theta_bar311[2:3]),Z_n3)
+  H312 <- cbind(W_n3%*%ginv(diag(n[3])-theta_bar312[1]*W_n3)%*%(Phi3%*%alpha_bar312+Z_n3%*%theta_bar312[2:3]),Z_n3)
+  H313 <- cbind(W_n3%*%ginv(diag(n[3])-theta_bar313[1]*W_n3)%*%(Phi3%*%alpha_bar313+Z_n3%*%theta_bar313[2:3]),Z_n3)
+  H321 <- cbind(W_n3%*%ginv(diag(n[3])-theta_bar321[1]*W_n3)%*%(Phi3%*%alpha_bar321+Z_n3%*%theta_bar321[2:3]),Z_n3)
+  H322 <- cbind(W_n3%*%ginv(diag(n[3])-theta_bar322[1]*W_n3)%*%(Phi3%*%alpha_bar322+Z_n3%*%theta_bar322[2:3]),Z_n3)
+  H323 <- cbind(W_n3%*%ginv(diag(n[3])-theta_bar323[1]*W_n3)%*%(Phi3%*%alpha_bar323+Z_n3%*%theta_bar323[2:3]),Z_n3)
+  H411 <- cbind(W_n4%*%ginv(diag(n[4])-theta_bar411[1]*W_n4)%*%(Phi4%*%alpha_bar411+Z_n4%*%theta_bar411[2:3]),Z_n4)
+  H412 <- cbind(W_n4%*%ginv(diag(n[4])-theta_bar412[1]*W_n4)%*%(Phi4%*%alpha_bar412+Z_n4%*%theta_bar412[2:3]),Z_n4)
+  H413 <- cbind(W_n4%*%ginv(diag(n[4])-theta_bar413[1]*W_n4)%*%(Phi4%*%alpha_bar413+Z_n4%*%theta_bar413[2:3]),Z_n4)
+  H421 <- cbind(W_n4%*%ginv(diag(n[4])-theta_bar421[1]*W_n4)%*%(Phi4%*%alpha_bar421+Z_n4%*%theta_bar421[2:3]),Z_n4)
+  H422 <- cbind(W_n4%*%ginv(diag(n[4])-theta_bar422[1]*W_n4)%*%(Phi4%*%alpha_bar422+Z_n4%*%theta_bar422[2:3]),Z_n4)
+  H423 <- cbind(W_n4%*%ginv(diag(n[4])-theta_bar423[1]*W_n4)%*%(Phi4%*%alpha_bar423+Z_n4%*%theta_bar423[2:3]),Z_n4)
+  H511 <- cbind(W_n5%*%ginv(diag(n[5])-theta_bar511[1]*W_n5)%*%(Phi5%*%alpha_bar511+Z_n5%*%theta_bar511[2:3]),Z_n5)
+  H512 <- cbind(W_n5%*%ginv(diag(n[5])-theta_bar512[1]*W_n5)%*%(Phi5%*%alpha_bar512+Z_n5%*%theta_bar512[2:3]),Z_n5)
+  H513 <- cbind(W_n5%*%ginv(diag(n[5])-theta_bar513[1]*W_n5)%*%(Phi5%*%alpha_bar513+Z_n5%*%theta_bar513[2:3]),Z_n5)
+  H521 <- cbind(W_n5%*%ginv(diag(n[5])-theta_bar521[1]*W_n5)%*%(Phi5%*%alpha_bar521+Z_n5%*%theta_bar521[2:3]),Z_n5)
+  H522 <- cbind(W_n5%*%ginv(diag(n[5])-theta_bar522[1]*W_n5)%*%(Phi5%*%alpha_bar522+Z_n5%*%theta_bar522[2:3]),Z_n5)
+  H523 <- cbind(W_n5%*%ginv(diag(n[5])-theta_bar523[1]*W_n5)%*%(Phi5%*%alpha_bar523+Z_n5%*%theta_bar523[2:3]),Z_n5)
+  H611 <- cbind(W_n6%*%ginv(diag(n[6])-theta_bar611[1]*W_n6)%*%(Phi6%*%alpha_bar611+Z_n6%*%theta_bar611[2:3]),Z_n6)
+  H612 <- cbind(W_n6%*%ginv(diag(n[6])-theta_bar612[1]*W_n6)%*%(Phi6%*%alpha_bar612+Z_n6%*%theta_bar612[2:3]),Z_n6)
+  H613 <- cbind(W_n6%*%ginv(diag(n[6])-theta_bar613[1]*W_n6)%*%(Phi6%*%alpha_bar613+Z_n6%*%theta_bar613[2:3]),Z_n6)
+  H621 <- cbind(W_n6%*%ginv(diag(n[6])-theta_bar621[1]*W_n6)%*%(Phi6%*%alpha_bar621+Z_n6%*%theta_bar621[2:3]),Z_n6)
+  H622 <- cbind(W_n6%*%ginv(diag(n[6])-theta_bar622[1]*W_n6)%*%(Phi6%*%alpha_bar622+Z_n6%*%theta_bar622[2:3]),Z_n6)
+  H623 <- cbind(W_n6%*%ginv(diag(n[6])-theta_bar623[1]*W_n6)%*%(Phi6%*%alpha_bar623+Z_n6%*%theta_bar623[2:3]),Z_n6)
+  M111 <- H111%*%ginv(t(H111)%*%H111)%*%t(H111)
+  M112 <- H112%*%ginv(t(H112)%*%H112)%*%t(H112)
+  M113 <- H113%*%ginv(t(H113)%*%H113)%*%t(H113)
+  M121 <- H121%*%ginv(t(H121)%*%H121)%*%t(H121)
+  M122 <- H122%*%ginv(t(H122)%*%H122)%*%t(H122)
+  M123 <- H123%*%ginv(t(H123)%*%H123)%*%t(H123)
+  M211 <- H211%*%ginv(t(H211)%*%H211)%*%t(H211)
+  M212 <- H212%*%ginv(t(H212)%*%H212)%*%t(H212)
+  M213 <- H213%*%ginv(t(H213)%*%H213)%*%t(H213)
+  M221 <- H221%*%ginv(t(H221)%*%H221)%*%t(H221)
+  M222 <- H222%*%ginv(t(H222)%*%H222)%*%t(H222)
+  M223 <- H223%*%ginv(t(H223)%*%H223)%*%t(H223)
+  M311 <- H311%*%ginv(t(H311)%*%H311)%*%t(H311)
+  M312 <- H312%*%ginv(t(H312)%*%H312)%*%t(H312)
+  M313 <- H313%*%ginv(t(H313)%*%H313)%*%t(H313)
+  M321 <- H321%*%ginv(t(H321)%*%H321)%*%t(H321)
+  M322 <- H322%*%ginv(t(H322)%*%H322)%*%t(H322)
+  M323 <- H323%*%ginv(t(H323)%*%H323)%*%t(H323)
+  M411 <- H411%*%ginv(t(H411)%*%H411)%*%t(H411)
+  M412 <- H412%*%ginv(t(H412)%*%H412)%*%t(H412)
+  M413 <- H413%*%ginv(t(H413)%*%H413)%*%t(H413)
+  M421 <- H421%*%ginv(t(H421)%*%H421)%*%t(H421)
+  M422 <- H422%*%ginv(t(H422)%*%H422)%*%t(H422)
+  M423 <- H423%*%ginv(t(H423)%*%H423)%*%t(H423)
+  M511 <- H511%*%ginv(t(H511)%*%H511)%*%t(H511)
+  M512 <- H512%*%ginv(t(H512)%*%H512)%*%t(H512)
+  M513 <- H513%*%ginv(t(H513)%*%H513)%*%t(H513)
+  M521 <- H521%*%ginv(t(H521)%*%H521)%*%t(H521)
+  M522 <- H522%*%ginv(t(H522)%*%H522)%*%t(H522)
+  M523 <- H523%*%ginv(t(H523)%*%H523)%*%t(H523)
+  M611 <- H611%*%ginv(t(H611)%*%H611)%*%t(H611)
+  M612 <- H612%*%ginv(t(H612)%*%H612)%*%t(H612)
+  M613 <- H613%*%ginv(t(H613)%*%H613)%*%t(H613)
+  M621 <- H621%*%ginv(t(H621)%*%H621)%*%t(H621)
+  M622 <- H622%*%ginv(t(H622)%*%H622)%*%t(H622)
+  M623 <- H623%*%ginv(t(H623)%*%H623)%*%t(H623)
+  theta_hat111 <- ginv(t(Q_n11[,1:3])%*%(diag(n[1])-P1)%*%M111%*%(diag(n[1])-P1)%*%Q_n11[,1:3])%*%t(Q_n11[,1:3])%*%(diag(n[1])-P1)%*%M111%*%(diag(n[1])-P1)%*%Y_n11[,1]
+  theta_hat112 <- ginv(t(Q_n11[,4:6])%*%(diag(n[1])-P1)%*%M112%*%(diag(n[1])-P1)%*%Q_n11[,4:6])%*%t(Q_n11[,4:6])%*%(diag(n[1])-P1)%*%M112%*%(diag(n[1])-P1)%*%Y_n11[,2]
+  theta_hat113 <- ginv(t(Q_n11[,7:9])%*%(diag(n[1])-P1)%*%M113%*%(diag(n[1])-P1)%*%Q_n11[,7:9])%*%t(Q_n11[,7:9])%*%(diag(n[1])-P1)%*%M113%*%(diag(n[1])-P1)%*%Y_n11[,3]
+  theta_hat121 <- ginv(t(Q_n12[,1:3])%*%(diag(n[1])-P1)%*%M121%*%(diag(n[1])-P1)%*%Q_n12[,1:3])%*%t(Q_n12[,1:3])%*%(diag(n[1])-P1)%*%M121%*%(diag(n[1])-P1)%*%Y_n12[,1]
+  theta_hat122 <- ginv(t(Q_n12[,4:6])%*%(diag(n[1])-P1)%*%M122%*%(diag(n[1])-P1)%*%Q_n12[,4:6])%*%t(Q_n12[,4:6])%*%(diag(n[1])-P1)%*%M122%*%(diag(n[1])-P1)%*%Y_n12[,2]
+  theta_hat123 <- ginv(t(Q_n12[,7:9])%*%(diag(n[1])-P1)%*%M123%*%(diag(n[1])-P1)%*%Q_n12[,7:9])%*%t(Q_n12[,7:9])%*%(diag(n[1])-P1)%*%M123%*%(diag(n[1])-P1)%*%Y_n12[,3]
+  theta_hat211 <- ginv(t(Q_n21[,1:3])%*%(diag(n[2])-P2)%*%M211%*%(diag(n[2])-P2)%*%Q_n21[,1:3])%*%t(Q_n21[,1:3])%*%(diag(n[2])-P2)%*%M211%*%(diag(n[2])-P2)%*%Y_n21[,1]
+  theta_hat212 <- ginv(t(Q_n21[,4:6])%*%(diag(n[2])-P2)%*%M212%*%(diag(n[2])-P2)%*%Q_n21[,4:6])%*%t(Q_n21[,4:6])%*%(diag(n[2])-P2)%*%M212%*%(diag(n[2])-P2)%*%Y_n21[,2]
+  theta_hat213 <- ginv(t(Q_n21[,7:9])%*%(diag(n[2])-P2)%*%M213%*%(diag(n[2])-P2)%*%Q_n21[,7:9])%*%t(Q_n21[,7:9])%*%(diag(n[2])-P2)%*%M213%*%(diag(n[2])-P2)%*%Y_n21[,3]
+  theta_hat221 <- ginv(t(Q_n22[,1:3])%*%(diag(n[2])-P2)%*%M221%*%(diag(n[2])-P2)%*%Q_n22[,1:3])%*%t(Q_n22[,1:3])%*%(diag(n[2])-P2)%*%M221%*%(diag(n[2])-P2)%*%Y_n22[,1]
+  theta_hat222 <- ginv(t(Q_n22[,4:6])%*%(diag(n[2])-P2)%*%M222%*%(diag(n[2])-P2)%*%Q_n22[,4:6])%*%t(Q_n22[,4:6])%*%(diag(n[2])-P2)%*%M222%*%(diag(n[2])-P2)%*%Y_n22[,2]
+  theta_hat223 <- ginv(t(Q_n22[,7:9])%*%(diag(n[2])-P2)%*%M223%*%(diag(n[2])-P2)%*%Q_n22[,7:9])%*%t(Q_n22[,7:9])%*%(diag(n[2])-P2)%*%M223%*%(diag(n[2])-P2)%*%Y_n22[,3]
+  theta_hat311 <- ginv(t(Q_n31[,1:3])%*%(diag(n[3])-P3)%*%M311%*%(diag(n[3])-P3)%*%Q_n31[,1:3])%*%t(Q_n31[,1:3])%*%(diag(n[3])-P3)%*%M311%*%(diag(n[3])-P3)%*%Y_n31[,1]
+  theta_hat312 <- ginv(t(Q_n31[,4:6])%*%(diag(n[3])-P3)%*%M312%*%(diag(n[3])-P3)%*%Q_n31[,4:6])%*%t(Q_n31[,4:6])%*%(diag(n[3])-P3)%*%M312%*%(diag(n[3])-P3)%*%Y_n31[,2]
+  theta_hat313 <- ginv(t(Q_n31[,7:9])%*%(diag(n[3])-P3)%*%M313%*%(diag(n[3])-P3)%*%Q_n31[,7:9])%*%t(Q_n31[,7:9])%*%(diag(n[3])-P3)%*%M313%*%(diag(n[3])-P3)%*%Y_n31[,3]
+  theta_hat321 <- ginv(t(Q_n32[,1:3])%*%(diag(n[3])-P3)%*%M321%*%(diag(n[3])-P3)%*%Q_n32[,1:3])%*%t(Q_n32[,1:3])%*%(diag(n[3])-P3)%*%M321%*%(diag(n[3])-P3)%*%Y_n32[,1]
+  theta_hat322 <- ginv(t(Q_n32[,4:6])%*%(diag(n[3])-P3)%*%M322%*%(diag(n[3])-P3)%*%Q_n32[,4:6])%*%t(Q_n32[,4:6])%*%(diag(n[3])-P3)%*%M322%*%(diag(n[3])-P3)%*%Y_n32[,2]
+  theta_hat323 <- ginv(t(Q_n32[,7:9])%*%(diag(n[3])-P3)%*%M323%*%(diag(n[3])-P3)%*%Q_n32[,7:9])%*%t(Q_n32[,7:9])%*%(diag(n[3])-P3)%*%M323%*%(diag(n[3])-P3)%*%Y_n32[,3]
+  theta_hat411 <- ginv(t(Q_n41[,1:3])%*%(diag(n[4])-P4)%*%M411%*%(diag(n[4])-P4)%*%Q_n41[,1:3])%*%t(Q_n41[,1:3])%*%(diag(n[4])-P4)%*%M411%*%(diag(n[4])-P4)%*%Y_n41[,1]
+  theta_hat412 <- ginv(t(Q_n41[,4:6])%*%(diag(n[4])-P4)%*%M412%*%(diag(n[4])-P4)%*%Q_n41[,4:6])%*%t(Q_n41[,4:6])%*%(diag(n[4])-P4)%*%M412%*%(diag(n[4])-P4)%*%Y_n41[,2]
+  theta_hat413 <- ginv(t(Q_n41[,7:9])%*%(diag(n[4])-P4)%*%M413%*%(diag(n[4])-P4)%*%Q_n41[,7:9])%*%t(Q_n41[,7:9])%*%(diag(n[4])-P4)%*%M413%*%(diag(n[4])-P4)%*%Y_n41[,3]
+  theta_hat421 <- ginv(t(Q_n42[,1:3])%*%(diag(n[4])-P4)%*%M421%*%(diag(n[4])-P4)%*%Q_n42[,1:3])%*%t(Q_n42[,1:3])%*%(diag(n[4])-P4)%*%M421%*%(diag(n[4])-P4)%*%Y_n42[,1]
+  theta_hat422 <- ginv(t(Q_n42[,4:6])%*%(diag(n[4])-P4)%*%M422%*%(diag(n[4])-P4)%*%Q_n42[,4:6])%*%t(Q_n42[,4:6])%*%(diag(n[4])-P4)%*%M422%*%(diag(n[4])-P4)%*%Y_n42[,2]
+  theta_hat423 <- ginv(t(Q_n42[,7:9])%*%(diag(n[4])-P4)%*%M423%*%(diag(n[4])-P4)%*%Q_n42[,7:9])%*%t(Q_n42[,7:9])%*%(diag(n[4])-P4)%*%M423%*%(diag(n[4])-P4)%*%Y_n42[,3]
+  theta_hat511 <- ginv(t(Q_n51[,1:3])%*%(diag(n[5])-P5)%*%M511%*%(diag(n[5])-P5)%*%Q_n51[,1:3])%*%t(Q_n51[,1:3])%*%(diag(n[5])-P5)%*%M511%*%(diag(n[5])-P5)%*%Y_n51[,1]
+  theta_hat512 <- ginv(t(Q_n51[,4:6])%*%(diag(n[5])-P5)%*%M512%*%(diag(n[5])-P5)%*%Q_n51[,4:6])%*%t(Q_n51[,4:6])%*%(diag(n[5])-P5)%*%M512%*%(diag(n[5])-P5)%*%Y_n51[,2]
+  theta_hat513 <- ginv(t(Q_n51[,7:9])%*%(diag(n[5])-P5)%*%M513%*%(diag(n[5])-P5)%*%Q_n51[,7:9])%*%t(Q_n51[,7:9])%*%(diag(n[5])-P5)%*%M513%*%(diag(n[5])-P5)%*%Y_n51[,3]
+  theta_hat521 <- ginv(t(Q_n52[,1:3])%*%(diag(n[5])-P5)%*%M521%*%(diag(n[5])-P5)%*%Q_n52[,1:3])%*%t(Q_n52[,1:3])%*%(diag(n[5])-P5)%*%M521%*%(diag(n[5])-P5)%*%Y_n52[,1]
+  theta_hat522 <- ginv(t(Q_n52[,4:6])%*%(diag(n[5])-P5)%*%M522%*%(diag(n[5])-P5)%*%Q_n52[,4:6])%*%t(Q_n52[,4:6])%*%(diag(n[5])-P5)%*%M522%*%(diag(n[5])-P5)%*%Y_n52[,2]
+  theta_hat523 <- ginv(t(Q_n52[,7:9])%*%(diag(n[5])-P5)%*%M523%*%(diag(n[5])-P5)%*%Q_n52[,7:9])%*%t(Q_n52[,7:9])%*%(diag(n[5])-P5)%*%M523%*%(diag(n[5])-P5)%*%Y_n52[,3]
+  theta_hat611 <- ginv(t(Q_n61[,1:3])%*%(diag(n[6])-P6)%*%M611%*%(diag(n[6])-P6)%*%Q_n61[,1:3])%*%t(Q_n61[,1:3])%*%(diag(n[6])-P6)%*%M611%*%(diag(n[6])-P6)%*%Y_n61[,1]
+  theta_hat612 <- ginv(t(Q_n61[,4:6])%*%(diag(n[6])-P6)%*%M612%*%(diag(n[6])-P6)%*%Q_n61[,4:6])%*%t(Q_n61[,4:6])%*%(diag(n[6])-P6)%*%M612%*%(diag(n[6])-P6)%*%Y_n61[,2]
+  theta_hat613 <- ginv(t(Q_n61[,7:9])%*%(diag(n[6])-P6)%*%M613%*%(diag(n[6])-P6)%*%Q_n61[,7:9])%*%t(Q_n61[,7:9])%*%(diag(n[6])-P6)%*%M613%*%(diag(n[6])-P6)%*%Y_n61[,3]
+  theta_hat621 <- ginv(t(Q_n62[,1:3])%*%(diag(n[6])-P6)%*%M621%*%(diag(n[6])-P6)%*%Q_n62[,1:3])%*%t(Q_n62[,1:3])%*%(diag(n[6])-P6)%*%M621%*%(diag(n[6])-P6)%*%Y_n62[,1]
+  theta_hat622 <- ginv(t(Q_n62[,4:6])%*%(diag(n[6])-P6)%*%M622%*%(diag(n[6])-P6)%*%Q_n62[,4:6])%*%t(Q_n62[,4:6])%*%(diag(n[6])-P6)%*%M622%*%(diag(n[6])-P6)%*%Y_n62[,2]
+  theta_hat623 <- ginv(t(Q_n62[,7:9])%*%(diag(n[6])-P6)%*%M623%*%(diag(n[6])-P6)%*%Q_n62[,7:9])%*%t(Q_n62[,7:9])%*%(diag(n[6])-P6)%*%M623%*%(diag(n[6])-P6)%*%Y_n62[,3]
+  alpha_hat111 <- ginv(t(Phi1)%*%Phi1)%*%t(Phi1)%*%(Y_n11[,1]-Q_n11[,1:3]%*%theta_hat111)
+  alpha_hat112 <- ginv(t(Phi1)%*%Phi1)%*%t(Phi1)%*%(Y_n11[,2]-Q_n11[,4:6]%*%theta_hat112)
+  alpha_hat113 <- ginv(t(Phi1)%*%Phi1)%*%t(Phi1)%*%(Y_n11[,3]-Q_n11[,7:9]%*%theta_hat113)  
+  alpha_hat121 <- ginv(t(Phi1)%*%Phi1)%*%t(Phi1)%*%(Y_n12[,1]-Q_n12[,1:3]%*%theta_hat121)
+  alpha_hat122 <- ginv(t(Phi1)%*%Phi1)%*%t(Phi1)%*%(Y_n12[,2]-Q_n12[,4:6]%*%theta_hat122)
+  alpha_hat123 <- ginv(t(Phi1)%*%Phi1)%*%t(Phi1)%*%(Y_n12[,3]-Q_n12[,7:9]%*%theta_hat123)
+  alpha_hat211 <- ginv(t(Phi2)%*%Phi2)%*%t(Phi2)%*%(Y_n21[,1]-Q_n21[,1:3]%*%theta_hat211)
+  alpha_hat212 <- ginv(t(Phi2)%*%Phi2)%*%t(Phi2)%*%(Y_n21[,2]-Q_n21[,4:6]%*%theta_hat212)
+  alpha_hat213 <- ginv(t(Phi2)%*%Phi2)%*%t(Phi2)%*%(Y_n21[,3]-Q_n21[,7:9]%*%theta_hat213)  
+  alpha_hat221 <- ginv(t(Phi2)%*%Phi2)%*%t(Phi2)%*%(Y_n22[,1]-Q_n22[,1:3]%*%theta_hat221)
+  alpha_hat222 <- ginv(t(Phi2)%*%Phi2)%*%t(Phi2)%*%(Y_n22[,2]-Q_n22[,4:6]%*%theta_hat222)
+  alpha_hat223 <- ginv(t(Phi2)%*%Phi2)%*%t(Phi2)%*%(Y_n22[,3]-Q_n22[,7:9]%*%theta_hat223)
+  alpha_hat311 <- ginv(t(Phi3)%*%Phi3)%*%t(Phi3)%*%(Y_n31[,1]-Q_n31[,1:3]%*%theta_hat311)
+  alpha_hat312 <- ginv(t(Phi3)%*%Phi3)%*%t(Phi3)%*%(Y_n31[,2]-Q_n31[,4:6]%*%theta_hat312)
+  alpha_hat313 <- ginv(t(Phi3)%*%Phi3)%*%t(Phi3)%*%(Y_n31[,3]-Q_n31[,7:9]%*%theta_hat313)  
+  alpha_hat321 <- ginv(t(Phi3)%*%Phi3)%*%t(Phi3)%*%(Y_n32[,1]-Q_n32[,1:3]%*%theta_hat321)
+  alpha_hat322 <- ginv(t(Phi3)%*%Phi3)%*%t(Phi3)%*%(Y_n32[,2]-Q_n32[,4:6]%*%theta_hat322)
+  alpha_hat323 <- ginv(t(Phi3)%*%Phi3)%*%t(Phi3)%*%(Y_n32[,3]-Q_n32[,7:9]%*%theta_hat323)
+  alpha_hat411 <- ginv(t(Phi4)%*%Phi4)%*%t(Phi4)%*%(Y_n41[,1]-Q_n41[,1:3]%*%theta_hat411)
+  alpha_hat412 <- ginv(t(Phi4)%*%Phi4)%*%t(Phi4)%*%(Y_n41[,2]-Q_n41[,4:6]%*%theta_hat412)
+  alpha_hat413 <- ginv(t(Phi4)%*%Phi4)%*%t(Phi4)%*%(Y_n41[,3]-Q_n41[,7:9]%*%theta_hat413)  
+  alpha_hat421 <- ginv(t(Phi4)%*%Phi4)%*%t(Phi4)%*%(Y_n42[,1]-Q_n42[,1:3]%*%theta_hat421)
+  alpha_hat422 <- ginv(t(Phi4)%*%Phi4)%*%t(Phi4)%*%(Y_n42[,2]-Q_n42[,4:6]%*%theta_hat422)
+  alpha_hat423 <- ginv(t(Phi4)%*%Phi4)%*%t(Phi4)%*%(Y_n42[,3]-Q_n42[,7:9]%*%theta_hat423)
+  alpha_hat511 <- ginv(t(Phi5)%*%Phi5)%*%t(Phi5)%*%(Y_n51[,1]-Q_n51[,1:3]%*%theta_hat511)
+  alpha_hat512 <- ginv(t(Phi5)%*%Phi5)%*%t(Phi5)%*%(Y_n51[,2]-Q_n51[,4:6]%*%theta_hat512)
+  alpha_hat513 <- ginv(t(Phi5)%*%Phi5)%*%t(Phi5)%*%(Y_n51[,3]-Q_n51[,7:9]%*%theta_hat513)  
+  alpha_hat521 <- ginv(t(Phi5)%*%Phi5)%*%t(Phi5)%*%(Y_n52[,1]-Q_n52[,1:3]%*%theta_hat521)
+  alpha_hat522 <- ginv(t(Phi5)%*%Phi5)%*%t(Phi5)%*%(Y_n52[,2]-Q_n52[,4:6]%*%theta_hat522)
+  alpha_hat523 <- ginv(t(Phi5)%*%Phi5)%*%t(Phi5)%*%(Y_n52[,3]-Q_n52[,7:9]%*%theta_hat523)
+  alpha_hat611 <- ginv(t(Phi6)%*%Phi6)%*%t(Phi6)%*%(Y_n61[,1]-Q_n61[,1:3]%*%theta_hat611)
+  alpha_hat612 <- ginv(t(Phi6)%*%Phi6)%*%t(Phi6)%*%(Y_n61[,2]-Q_n61[,4:6]%*%theta_hat612)
+  alpha_hat613 <- ginv(t(Phi6)%*%Phi6)%*%t(Phi6)%*%(Y_n61[,3]-Q_n61[,7:9]%*%theta_hat613)  
+  alpha_hat621 <- ginv(t(Phi6)%*%Phi6)%*%t(Phi6)%*%(Y_n62[,1]-Q_n62[,1:3]%*%theta_hat621)
+  alpha_hat622 <- ginv(t(Phi6)%*%Phi6)%*%t(Phi6)%*%(Y_n62[,2]-Q_n62[,4:6]%*%theta_hat622)
+  alpha_hat623 <- ginv(t(Phi6)%*%Phi6)%*%t(Phi6)%*%(Y_n62[,3]-Q_n62[,7:9]%*%theta_hat623)  
+ 
+  theta_hat11 <- cbind(theta_hat111,theta_hat112,theta_hat113)
+  theta_hat12 <- cbind(theta_hat121,theta_hat122,theta_hat123)
+  theta_hat21 <- cbind(theta_hat211,theta_hat212,theta_hat213)
+  theta_hat22 <- cbind(theta_hat221,theta_hat222,theta_hat223)
+  theta_hat31 <- cbind(theta_hat311,theta_hat312,theta_hat313)
+  theta_hat32 <- cbind(theta_hat321,theta_hat322,theta_hat323)
+  theta_hat41 <- cbind(theta_hat411,theta_hat412,theta_hat413)
+  theta_hat42 <- cbind(theta_hat421,theta_hat422,theta_hat423)
+  theta_hat51 <- cbind(theta_hat511,theta_hat512,theta_hat513)
+  theta_hat52 <- cbind(theta_hat521,theta_hat522,theta_hat523)
+  theta_hat61 <- cbind(theta_hat611,theta_hat612,theta_hat613)
+  theta_hat62 <- cbind(theta_hat621,theta_hat622,theta_hat623)
+  alpha_hat11 <- cbind(alpha_hat111,alpha_hat112,alpha_hat113)
+  alpha_hat12 <- cbind(alpha_hat121,alpha_hat122,alpha_hat123)
+  alpha_hat21 <- cbind(alpha_hat211,alpha_hat212,alpha_hat213)
+  alpha_hat22 <- cbind(alpha_hat221,alpha_hat222,alpha_hat223)
+  alpha_hat31 <- cbind(alpha_hat311,alpha_hat312,alpha_hat313)
+  alpha_hat32 <- cbind(alpha_hat321,alpha_hat322,alpha_hat323)
+  alpha_hat41 <- cbind(alpha_hat411,alpha_hat412,alpha_hat413)
+  alpha_hat42 <- cbind(alpha_hat421,alpha_hat422,alpha_hat423)
+  alpha_hat51 <- cbind(alpha_hat511,alpha_hat512,alpha_hat513)
+  alpha_hat52 <- cbind(alpha_hat521,alpha_hat522,alpha_hat523)
+  alpha_hat61 <- cbind(alpha_hat611,alpha_hat612,alpha_hat613)
+  alpha_hat62 <- cbind(alpha_hat621,alpha_hat622,alpha_hat623)
+
+  
+  return(list(theta_hat11=theta_hat11,theta_hat12=theta_hat12,theta_hat21=theta_hat21,theta_hat22=theta_hat22,theta_hat31=theta_hat31,theta_hat32=theta_hat32,theta_hat41=theta_hat41,theta_hat42=theta_hat42,theta_hat51=theta_hat51,theta_hat52=theta_hat52,theta_hat61=theta_hat61,theta_hat62=theta_hat62,alpha_hat11=alpha_hat11,alpha_hat12=alpha_hat12,alpha_hat21=alpha_hat21,alpha_hat22=alpha_hat22,alpha_hat31=alpha_hat31,alpha_hat32=alpha_hat32,alpha_hat41=alpha_hat41,alpha_hat42=alpha_hat42,alpha_hat51=alpha_hat51,alpha_hat52=alpha_hat52,alpha_hat61=alpha_hat61,alpha_hat62=alpha_hat62))
+}
+
+#################################################################
+#Calculate test statistics
+#################################################################
+TS <- function(Y_n11,Y_n12,Y_n21,Y_n22,Y_n31,Y_n32,Y_n41,Y_n42,Y_n51,Y_n52,Y_n61,Y_n62,W_n1,W_n2,W_n3,W_n4,W_n5,W_n6,Z_n1,Z_n2,Z_n3,Z_n4,Z_n5,Z_n6,X_nt1,X_nt2,X_nt3,X_nt4,X_nt5,X_nt6,theta_hat11,theta_hat12,theta_hat21,theta_hat22,theta_hat31,theta_hat32,theta_hat41,theta_hat42,theta_hat51,theta_hat52,theta_hat61,theta_hat62,Phi1,Phi2,Phi3,Phi4,Phi5,Phi6,alpha_hat11,alpha_hat12,alpha_hat21,alpha_hat22,alpha_hat31,alpha_hat32,alpha_hat41,alpha_hat42,alpha_hat51,alpha_hat52,alpha_hat61,alpha_hat62,T,h_2_tilde1,h_2_tilde2,h_2_tilde3,h_2_tilde4,h_2_tilde5,h_2_tilde6,n)
+{
+  varepsilon_hat111 <- Y_n11[,1]-theta_hat11[1,1]*W_n1%*%Y_n11[,1]-Z_n1%*%theta_hat11[2:3,1]-Phi1%*%alpha_hat11[,1]
+  varepsilon_hat112 <- Y_n11[,2]-theta_hat11[1,2]*W_n1%*%Y_n11[,2]-Z_n1%*%theta_hat11[2:3,2]-Phi1%*%alpha_hat11[,2]
+  varepsilon_hat113 <- Y_n11[,3]-theta_hat11[1,3]*W_n1%*%Y_n11[,3]-Z_n1%*%theta_hat11[2:3,3]-Phi1%*%alpha_hat11[,3]
+  varepsilon_hat121 <- Y_n12[,1]-theta_hat12[1,1]*W_n1%*%Y_n12[,1]-Z_n1%*%theta_hat12[2:3,1]-Phi1%*%alpha_hat12[,1]
+  varepsilon_hat122 <- Y_n12[,2]-theta_hat12[1,2]*W_n1%*%Y_n12[,2]-Z_n1%*%theta_hat12[2:3,2]-Phi1%*%alpha_hat12[,2]
+  varepsilon_hat123 <- Y_n12[,3]-theta_hat12[1,3]*W_n1%*%Y_n12[,3]-Z_n1%*%theta_hat12[2:3,3]-Phi1%*%alpha_hat12[,3]
+  varepsilon_hat211 <- Y_n21[,1]-theta_hat21[1,1]*W_n2%*%Y_n21[,1]-Z_n2%*%theta_hat21[2:3,1]-Phi2%*%alpha_hat21[,1]
+  varepsilon_hat212 <- Y_n21[,2]-theta_hat21[1,2]*W_n2%*%Y_n21[,2]-Z_n2%*%theta_hat21[2:3,2]-Phi2%*%alpha_hat21[,2]
+  varepsilon_hat213 <- Y_n21[,3]-theta_hat21[1,3]*W_n2%*%Y_n21[,3]-Z_n2%*%theta_hat21[2:3,3]-Phi2%*%alpha_hat21[,3]
+  varepsilon_hat221 <- Y_n22[,1]-theta_hat22[1,1]*W_n2%*%Y_n22[,1]-Z_n2%*%theta_hat22[2:3,1]-Phi2%*%alpha_hat22[,1]
+  varepsilon_hat222 <- Y_n22[,2]-theta_hat22[1,2]*W_n2%*%Y_n22[,2]-Z_n2%*%theta_hat22[2:3,2]-Phi2%*%alpha_hat22[,2]
+  varepsilon_hat223 <- Y_n22[,3]-theta_hat22[1,3]*W_n2%*%Y_n22[,3]-Z_n2%*%theta_hat22[2:3,3]-Phi2%*%alpha_hat22[,3]
+  varepsilon_hat311 <- Y_n31[,1]-theta_hat31[1,1]*W_n3%*%Y_n31[,1]-Z_n3%*%theta_hat31[2:3,1]-Phi3%*%alpha_hat31[,1]
+  varepsilon_hat312 <- Y_n31[,2]-theta_hat31[1,2]*W_n3%*%Y_n31[,2]-Z_n3%*%theta_hat31[2:3,2]-Phi3%*%alpha_hat31[,2]
+  varepsilon_hat313 <- Y_n31[,3]-theta_hat31[1,3]*W_n3%*%Y_n31[,3]-Z_n3%*%theta_hat31[2:3,3]-Phi3%*%alpha_hat31[,3]
+  varepsilon_hat321 <- Y_n32[,1]-theta_hat32[1,1]*W_n3%*%Y_n32[,1]-Z_n3%*%theta_hat32[2:3,1]-Phi3%*%alpha_hat32[,1]
+  varepsilon_hat322 <- Y_n32[,2]-theta_hat32[1,2]*W_n3%*%Y_n32[,2]-Z_n3%*%theta_hat32[2:3,2]-Phi3%*%alpha_hat32[,2]
+  varepsilon_hat323 <- Y_n32[,3]-theta_hat32[1,3]*W_n3%*%Y_n32[,3]-Z_n3%*%theta_hat32[2:3,3]-Phi3%*%alpha_hat32[,3]
+  varepsilon_hat411 <- Y_n41[,1]-theta_hat41[1,1]*W_n4%*%Y_n41[,1]-Z_n4%*%theta_hat41[2:3,1]-Phi4%*%alpha_hat41[,1]
+  varepsilon_hat412 <- Y_n41[,2]-theta_hat41[1,2]*W_n4%*%Y_n41[,2]-Z_n4%*%theta_hat41[2:3,2]-Phi4%*%alpha_hat41[,2]
+  varepsilon_hat413 <- Y_n41[,3]-theta_hat41[1,3]*W_n4%*%Y_n41[,3]-Z_n4%*%theta_hat41[2:3,3]-Phi4%*%alpha_hat41[,3]
+  varepsilon_hat421 <- Y_n42[,1]-theta_hat42[1,1]*W_n4%*%Y_n42[,1]-Z_n4%*%theta_hat42[2:3,1]-Phi4%*%alpha_hat42[,1]
+  varepsilon_hat422 <- Y_n42[,2]-theta_hat42[1,2]*W_n4%*%Y_n42[,2]-Z_n4%*%theta_hat42[2:3,2]-Phi4%*%alpha_hat42[,2]
+  varepsilon_hat423 <- Y_n42[,3]-theta_hat42[1,3]*W_n4%*%Y_n42[,3]-Z_n4%*%theta_hat42[2:3,3]-Phi4%*%alpha_hat42[,3]
+  varepsilon_hat511 <- Y_n51[,1]-theta_hat51[1,1]*W_n5%*%Y_n51[,1]-Z_n5%*%theta_hat51[2:3,1]-Phi5%*%alpha_hat51[,1]
+  varepsilon_hat512 <- Y_n51[,2]-theta_hat51[1,2]*W_n5%*%Y_n51[,2]-Z_n5%*%theta_hat51[2:3,2]-Phi5%*%alpha_hat51[,2]
+  varepsilon_hat513 <- Y_n51[,3]-theta_hat51[1,3]*W_n5%*%Y_n51[,3]-Z_n5%*%theta_hat51[2:3,3]-Phi5%*%alpha_hat51[,3]
+  varepsilon_hat521 <- Y_n52[,1]-theta_hat52[1,1]*W_n5%*%Y_n52[,1]-Z_n5%*%theta_hat52[2:3,1]-Phi5%*%alpha_hat52[,1]
+  varepsilon_hat522 <- Y_n52[,2]-theta_hat52[1,2]*W_n5%*%Y_n52[,2]-Z_n5%*%theta_hat52[2:3,2]-Phi5%*%alpha_hat52[,2]
+  varepsilon_hat523 <- Y_n52[,3]-theta_hat52[1,3]*W_n5%*%Y_n52[,3]-Z_n5%*%theta_hat52[2:3,3]-Phi5%*%alpha_hat52[,3]
+  varepsilon_hat611 <- Y_n61[,1]-theta_hat61[1,1]*W_n6%*%Y_n61[,1]-Z_n6%*%theta_hat61[2:3,1]-Phi6%*%alpha_hat61[,1]
+  varepsilon_hat612 <- Y_n61[,2]-theta_hat61[1,3]*W_n6%*%Y_n61[,2]-Z_n6%*%theta_hat61[2:3,2]-Phi6%*%alpha_hat61[,2]
+  varepsilon_hat613 <- Y_n61[,3]-theta_hat61[1,3]*W_n6%*%Y_n61[,3]-Z_n6%*%theta_hat61[2:3,3]-Phi6%*%alpha_hat61[,3]
+  varepsilon_hat621 <- Y_n62[,1]-theta_hat62[1,1]*W_n6%*%Y_n62[,1]-Z_n6%*%theta_hat62[2:3,1]-Phi6%*%alpha_hat62[,1]
+  varepsilon_hat622 <- Y_n62[,2]-theta_hat62[1,2]*W_n6%*%Y_n62[,2]-Z_n6%*%theta_hat62[2:3,2]-Phi6%*%alpha_hat62[,2]
+  varepsilon_hat623 <- Y_n62[,3]-theta_hat62[1,3]*W_n6%*%Y_n62[,3]-Z_n6%*%theta_hat62[2:3,3]-Phi6%*%alpha_hat62[,3]
+  varepsilon_hat11 <- cbind(varepsilon_hat111,varepsilon_hat112,varepsilon_hat113)
+  varepsilon_hat12 <- cbind(varepsilon_hat121,varepsilon_hat122,varepsilon_hat123)
+  varepsilon_hat21 <- cbind(varepsilon_hat211,varepsilon_hat212,varepsilon_hat213)
+  varepsilon_hat22 <- cbind(varepsilon_hat221,varepsilon_hat222,varepsilon_hat223)
+  varepsilon_hat31 <- cbind(varepsilon_hat311,varepsilon_hat312,varepsilon_hat313)
+  varepsilon_hat32 <- cbind(varepsilon_hat321,varepsilon_hat322,varepsilon_hat323)
+  varepsilon_hat41 <- cbind(varepsilon_hat411,varepsilon_hat412,varepsilon_hat413)
+  varepsilon_hat42 <- cbind(varepsilon_hat421,varepsilon_hat422,varepsilon_hat423)
+  varepsilon_hat51 <- cbind(varepsilon_hat511,varepsilon_hat512,varepsilon_hat513)
+  varepsilon_hat52 <- cbind(varepsilon_hat521,varepsilon_hat522,varepsilon_hat523)
+  varepsilon_hat61 <- cbind(varepsilon_hat611,varepsilon_hat612,varepsilon_hat613)
+  varepsilon_hat62 <- cbind(varepsilon_hat621,varepsilon_hat622,varepsilon_hat623)
+  h_mod111 <- sum(h_2_tilde1^2)+sum((theta_hat11[2:3,1])^2)
+  h_mod112 <- sum(h_2_tilde1^2)+sum((theta_hat11[2:3,2])^2)
+  h_mod113 <- sum(h_2_tilde1^2)+sum((theta_hat11[2:3,3])^2)
+  h_mod121 <- sum(h_2_tilde1^2)+sum((theta_hat12[2:3,1])^2)
+  h_mod122 <- sum(h_2_tilde1^2)+sum((theta_hat12[2:3,2])^2)
+  h_mod123 <- sum(h_2_tilde1^2)+sum((theta_hat12[2:3,3])^2)
+  h_mod211 <- sum(h_2_tilde2^2)+sum((theta_hat21[2:3,1])^2)
+  h_mod212 <- sum(h_2_tilde2^2)+sum((theta_hat21[2:3,2])^2)
+  h_mod213 <- sum(h_2_tilde2^2)+sum((theta_hat21[2:3,3])^2)
+  h_mod221 <- sum(h_2_tilde2^2)+sum((theta_hat22[2:3,1])^2)
+  h_mod222 <- sum(h_2_tilde2^2)+sum((theta_hat22[2:3,2])^2)
+  h_mod223 <- sum(h_2_tilde2^2)+sum((theta_hat22[2:3,3])^2)
+  h_mod311 <- sum(h_2_tilde3^2)+sum((theta_hat31[2:3,1])^2)
+  h_mod312 <- sum(h_2_tilde3^2)+sum((theta_hat31[2:3,2])^2)
+  h_mod313 <- sum(h_2_tilde3^2)+sum((theta_hat31[2:3,3])^2)
+  h_mod321 <- sum(h_2_tilde3^2)+sum((theta_hat32[2:3,1])^2)
+  h_mod322 <- sum(h_2_tilde3^2)+sum((theta_hat32[2:3,2])^2)
+  h_mod323 <- sum(h_2_tilde3^2)+sum((theta_hat32[2:3,3])^2)
+  h_mod411 <- sum(h_2_tilde4^2)+sum((theta_hat41[2:3,1])^2)
+  h_mod412 <- sum(h_2_tilde4^2)+sum((theta_hat41[2:3,2])^2)
+  h_mod413 <- sum(h_2_tilde4^2)+sum((theta_hat41[2:3,3])^2)
+  h_mod421 <- sum(h_2_tilde4^2)+sum((theta_hat42[2:3,1])^2)
+  h_mod422 <- sum(h_2_tilde4^2)+sum((theta_hat42[2:3,2])^2)
+  h_mod423 <- sum(h_2_tilde4^2)+sum((theta_hat42[2:3,3])^2)
+  h_mod511 <- sum(h_2_tilde5^2)+sum((theta_hat51[2:3,1])^2)
+  h_mod512 <- sum(h_2_tilde5^2)+sum((theta_hat51[2:3,2])^2)
+  h_mod513 <- sum(h_2_tilde5^2)+sum((theta_hat51[2:3,3])^2)
+  h_mod521 <- sum(h_2_tilde5^2)+sum((theta_hat52[2:3,1])^2)
+  h_mod522 <- sum(h_2_tilde5^2)+sum((theta_hat52[2:3,2])^2)
+  h_mod523 <- sum(h_2_tilde5^2)+sum((theta_hat52[2:3,3])^2)
+  h_mod611 <- sum(h_2_tilde6^2)+sum((theta_hat61[2:3,1])^2)
+  h_mod612 <- sum(h_2_tilde6^2)+sum((theta_hat61[2:3,2])^2)
+  h_mod613 <- sum(h_2_tilde6^2)+sum((theta_hat61[2:3,3])^2)
+  h_mod621 <- sum(h_2_tilde6^2)+sum((theta_hat62[2:3,1])^2)
+  h_mod622 <- sum(h_2_tilde6^2)+sum((theta_hat62[2:3,2])^2)
+  h_mod623 <- sum(h_2_tilde6^2)+sum((theta_hat62[2:3,3])^2)
+  h_111 <- theta_hat11[2:3,1]/sqrt(h_mod111)
+  h_112 <- theta_hat11[2:3,2]/sqrt(h_mod112)
+  h_113 <- theta_hat11[2:3,3]/sqrt(h_mod113)
+  h_121 <- theta_hat12[2:3,1]/sqrt(h_mod121)
+  h_122 <- theta_hat12[2:3,2]/sqrt(h_mod122)
+  h_123 <- theta_hat12[2:3,3]/sqrt(h_mod123)
+  h_211 <- theta_hat21[2:3,1]/sqrt(h_mod211)
+  h_212 <- theta_hat21[2:3,2]/sqrt(h_mod212)
+  h_213 <- theta_hat21[2:3,3]/sqrt(h_mod213)
+  h_221 <- theta_hat22[2:3,1]/sqrt(h_mod221)
+  h_222 <- theta_hat22[2:3,2]/sqrt(h_mod222)
+  h_223 <- theta_hat22[2:3,3]/sqrt(h_mod223)
+  h_311 <- theta_hat31[2:3,1]/sqrt(h_mod311)
+  h_312 <- theta_hat31[2:3,2]/sqrt(h_mod312)
+  h_313 <- theta_hat31[2:3,3]/sqrt(h_mod313)
+  h_321 <- theta_hat32[2:3,1]/sqrt(h_mod321)
+  h_322 <- theta_hat32[2:3,2]/sqrt(h_mod322)
+  h_323 <- theta_hat32[2:3,3]/sqrt(h_mod323)
+  h_411 <- theta_hat41[2:3,1]/sqrt(h_mod411)
+  h_412 <- theta_hat41[2:3,2]/sqrt(h_mod412)
+  h_413 <- theta_hat41[2:3,3]/sqrt(h_mod413)
+  h_421 <- theta_hat42[2:3,1]/sqrt(h_mod421)
+  h_422 <- theta_hat42[2:3,2]/sqrt(h_mod422)
+  h_423 <- theta_hat42[2:3,3]/sqrt(h_mod423)
+  h_511 <- theta_hat51[2:3,1]/sqrt(h_mod511)
+  h_512 <- theta_hat51[2:3,2]/sqrt(h_mod512)
+  h_513 <- theta_hat51[2:3,3]/sqrt(h_mod513)
+  h_521 <- theta_hat52[2:3,1]/sqrt(h_mod521)
+  h_522 <- theta_hat52[2:3,2]/sqrt(h_mod522)
+  h_523 <- theta_hat52[2:3,3]/sqrt(h_mod523)
+  h_611 <- theta_hat61[2:3,1]/sqrt(h_mod611)
+  h_612 <- theta_hat61[2:3,2]/sqrt(h_mod612)
+  h_613 <- theta_hat61[2:3,3]/sqrt(h_mod613)
+  h_621 <- theta_hat62[2:3,1]/sqrt(h_mod621)
+  h_622 <- theta_hat62[2:3,2]/sqrt(h_mod622)
+  h_623 <- theta_hat62[2:3,3]/sqrt(h_mod623)
+  h_1211 <- h_2_tilde1/sqrt(h_mod111)
+  h_1212 <- h_2_tilde1/sqrt(h_mod112)
+  h_1213 <- h_2_tilde1/sqrt(h_mod113)
+  h_1221 <- h_2_tilde1/sqrt(h_mod121)
+  h_1222 <- h_2_tilde1/sqrt(h_mod122)
+  h_1223 <- h_2_tilde1/sqrt(h_mod123)
+  h_2211 <- h_2_tilde2/sqrt(h_mod211)
+  h_2212 <- h_2_tilde2/sqrt(h_mod212)
+  h_2213 <- h_2_tilde2/sqrt(h_mod213)
+  h_2221 <- h_2_tilde2/sqrt(h_mod221)
+  h_2222 <- h_2_tilde2/sqrt(h_mod222)
+  h_2223 <- h_2_tilde2/sqrt(h_mod223) 
+  h_3211 <- h_2_tilde3/sqrt(h_mod311)
+  h_3212 <- h_2_tilde3/sqrt(h_mod312)
+  h_3213 <- h_2_tilde3/sqrt(h_mod313)
+  h_3221 <- h_2_tilde3/sqrt(h_mod321)
+  h_3222 <- h_2_tilde3/sqrt(h_mod322)
+  h_3223 <- h_2_tilde3/sqrt(h_mod323) 
+  h_4211 <- h_2_tilde4/sqrt(h_mod411)
+  h_4212 <- h_2_tilde4/sqrt(h_mod412)
+  h_4213 <- h_2_tilde4/sqrt(h_mod413)
+  h_4221 <- h_2_tilde4/sqrt(h_mod421)
+  h_4222 <- h_2_tilde4/sqrt(h_mod422)
+  h_4223 <- h_2_tilde4/sqrt(h_mod423) 
+  h_5211 <- h_2_tilde5/sqrt(h_mod511)
+  h_5212 <- h_2_tilde5/sqrt(h_mod512)
+  h_5213 <- h_2_tilde5/sqrt(h_mod513)
+  h_5221 <- h_2_tilde5/sqrt(h_mod521)
+  h_5222 <- h_2_tilde5/sqrt(h_mod522)
+  h_5223 <- h_2_tilde5/sqrt(h_mod523) 
+  h_6211 <- h_2_tilde6/sqrt(h_mod611)
+  h_6212 <- h_2_tilde6/sqrt(h_mod612)
+  h_6213 <- h_2_tilde6/sqrt(h_mod613)
+  h_6221 <- h_2_tilde6/sqrt(h_mod621)
+  h_6222 <- h_2_tilde6/sqrt(h_mod622)
+  h_6223 <- h_2_tilde6/sqrt(h_mod623)   
+  Uh111 <- Z_n1%*%h_111+X_nt1%*%h_1211/100
+  Uh112 <- Z_n1%*%h_112+X_nt1%*%h_1212/100
+  Uh113 <- Z_n1%*%h_113+X_nt1%*%h_1213/100
+  Uh121 <- Z_n1%*%h_121+X_nt1%*%h_1221/100
+  Uh122 <- Z_n1%*%h_122+X_nt1%*%h_1222/100
+  Uh123 <- Z_n1%*%h_123+X_nt1%*%h_1223/100
+  Uh211 <- Z_n2%*%h_211+X_nt2%*%h_2211/100
+  Uh212 <- Z_n2%*%h_212+X_nt2%*%h_2212/100
+  Uh213 <- Z_n2%*%h_213+X_nt2%*%h_2213/100
+  Uh221 <- Z_n2%*%h_221+X_nt2%*%h_2221/100
+  Uh222 <- Z_n2%*%h_222+X_nt2%*%h_2222/100
+  Uh223 <- Z_n2%*%h_223+X_nt2%*%h_2223/100
+  Uh311 <- Z_n3%*%h_311+X_nt3%*%h_3211/100
+  Uh312 <- Z_n3%*%h_312+X_nt3%*%h_3212/100
+  Uh313 <- Z_n3%*%h_313+X_nt3%*%h_3213/100
+  Uh321 <- Z_n3%*%h_321+X_nt3%*%h_3221/100
+  Uh322 <- Z_n3%*%h_322+X_nt3%*%h_3222/100
+  Uh323 <- Z_n3%*%h_323+X_nt3%*%h_3223/100
+  Uh411 <- Z_n4%*%h_411+X_nt4%*%h_4211/100
+  Uh412 <- Z_n4%*%h_412+X_nt4%*%h_4212/100
+  Uh413 <- Z_n4%*%h_413+X_nt4%*%h_4213/100
+  Uh421 <- Z_n4%*%h_421+X_nt4%*%h_4221/100
+  Uh422 <- Z_n4%*%h_422+X_nt4%*%h_4222/100
+  Uh423 <- Z_n4%*%h_423+X_nt4%*%h_4223/100
+  Uh511 <- Z_n5%*%h_511+X_nt5%*%h_5211/100
+  Uh512 <- Z_n5%*%h_512+X_nt5%*%h_5212/100
+  Uh513 <- Z_n5%*%h_513+X_nt5%*%h_5213/100
+  Uh521 <- Z_n5%*%h_521+X_nt5%*%h_5221/100
+  Uh522 <- Z_n5%*%h_522+X_nt5%*%h_5222/100
+  Uh523 <- Z_n5%*%h_523+X_nt5%*%h_5223/100
+  Uh611 <- Z_n6%*%h_611+X_nt6%*%h_6211/100
+  Uh612 <- Z_n6%*%h_612+X_nt6%*%h_6212/100
+  Uh613 <- Z_n6%*%h_613+X_nt6%*%h_6213/100
+  Uh621 <- Z_n6%*%h_621+X_nt6%*%h_6221/100
+  Uh622 <- Z_n6%*%h_622+X_nt6%*%h_6222/100
+  Uh623 <- Z_n6%*%h_623+X_nt6%*%h_6223/100
+  u <- runif(100)
+  CRn_hat111 <- rep(0,100)
+  CRn_hat112 <- rep(0,100)
+  CRn_hat113 <- rep(0,100)
+  CRn_hat121 <- rep(0,100)
+  CRn_hat122 <- rep(0,100)
+  CRn_hat123 <- rep(0,100)
+  CRn_hat211 <- rep(0,100)
+  CRn_hat212 <- rep(0,100)
+  CRn_hat213 <- rep(0,100)
+  CRn_hat221 <- rep(0,100)
+  CRn_hat222 <- rep(0,100)
+  CRn_hat223 <- rep(0,100)
+  CRn_hat311 <- rep(0,100)
+  CRn_hat312 <- rep(0,100)
+  CRn_hat313 <- rep(0,100)
+  CRn_hat321 <- rep(0,100)
+  CRn_hat322 <- rep(0,100)
+  CRn_hat323 <- rep(0,100)
+  CRn_hat411 <- rep(0,100)
+  CRn_hat412 <- rep(0,100)
+  CRn_hat413 <- rep(0,100)
+  CRn_hat421 <- rep(0,100)
+  CRn_hat422 <- rep(0,100)
+  CRn_hat423 <- rep(0,100)
+  CRn_hat511 <- rep(0,100)
+  CRn_hat512 <- rep(0,100)
+  CRn_hat513 <- rep(0,100)
+  CRn_hat521 <- rep(0,100)
+  CRn_hat522 <- rep(0,100)
+  CRn_hat523 <- rep(0,100)
+  CRn_hat611 <- rep(0,100)
+  CRn_hat612 <- rep(0,100)
+  CRn_hat613 <- rep(0,100)
+  CRn_hat621 <- rep(0,100)
+  CRn_hat622 <- rep(0,100)
+  CRn_hat623 <- rep(0,100)
+  for(i in 1:100)
+  { 
+    sum111 <- 0
+	sum112 <- 0
+	sum113 <- 0
+    sum121 <- 0
+	sum122 <- 0
+	sum123 <- 0
+	sum211 <- 0
+	sum212 <- 0
+	sum213 <- 0
+    sum221 <- 0
+	sum222 <- 0
+	sum223 <- 0
+	sum311 <- 0
+	sum312 <- 0
+	sum313 <- 0
+    sum321 <- 0
+	sum322 <- 0
+	sum323 <- 0
+	sum411 <- 0
+	sum412 <- 0
+	sum413 <- 0
+    sum421 <- 0
+	sum422 <- 0
+	sum423 <- 0
+	sum511 <- 0
+	sum512 <- 0
+	sum513 <- 0
+    sum521 <- 0
+	sum522 <- 0
+	sum523 <- 0
+	sum611 <- 0
+	sum612 <- 0
+	sum613 <- 0
+    sum621 <- 0
+	sum622 <- 0
+	sum623 <- 0
+    for(j in 1:n[1])
+	{
+	  sum111 <- sum111+varepsilon_hat111[j]*ifelse(Uh111[j]<=u[i],1,0)
+	  sum112 <- sum112+varepsilon_hat112[j]*ifelse(Uh112[j]<=u[i],1,0)
+	  sum113 <- sum113+varepsilon_hat113[j]*ifelse(Uh113[j]<=u[i],1,0)
+	  sum121 <- sum121+varepsilon_hat121[j]*ifelse(Uh121[j]<=u[i],1,0)
+	  sum122 <- sum122+varepsilon_hat122[j]*ifelse(Uh122[j]<=u[i],1,0)
+	  sum123 <- sum123+varepsilon_hat123[j]*ifelse(Uh123[j]<=u[i],1,0)
+	}
+	for(j in 1:n[2])
+	{
+	  sum211 <- sum211+varepsilon_hat211[j]*ifelse(Uh211[j]<=u[i],1,0)
+	  sum212 <- sum212+varepsilon_hat212[j]*ifelse(Uh212[j]<=u[i],1,0)
+	  sum213 <- sum213+varepsilon_hat213[j]*ifelse(Uh213[j]<=u[i],1,0)
+	  sum221 <- sum221+varepsilon_hat221[j]*ifelse(Uh221[j]<=u[i],1,0)
+	  sum222 <- sum222+varepsilon_hat222[j]*ifelse(Uh222[j]<=u[i],1,0)
+	  sum223 <- sum223+varepsilon_hat223[j]*ifelse(Uh223[j]<=u[i],1,0)
+	}
+	for(j in 1:n[3])
+	{
+	  sum311 <- sum311+varepsilon_hat311[j]*ifelse(Uh311[j]<=u[i],1,0)
+	  sum312 <- sum312+varepsilon_hat312[j]*ifelse(Uh312[j]<=u[i],1,0)
+	  sum313 <- sum313+varepsilon_hat313[j]*ifelse(Uh313[j]<=u[i],1,0)
+	  sum321 <- sum321+varepsilon_hat321[j]*ifelse(Uh321[j]<=u[i],1,0)
+	  sum322 <- sum322+varepsilon_hat322[j]*ifelse(Uh322[j]<=u[i],1,0)
+	  sum323 <- sum323+varepsilon_hat323[j]*ifelse(Uh323[j]<=u[i],1,0)
+	}
+	for(j in 1:n[4])
+	{
+	  sum411 <- sum411+varepsilon_hat411[j]*ifelse(Uh411[j]<=u[i],1,0)
+	  sum412 <- sum412+varepsilon_hat412[j]*ifelse(Uh412[j]<=u[i],1,0)
+	  sum413 <- sum413+varepsilon_hat413[j]*ifelse(Uh413[j]<=u[i],1,0)
+	  sum421 <- sum421+varepsilon_hat421[j]*ifelse(Uh421[j]<=u[i],1,0)
+	  sum422 <- sum422+varepsilon_hat422[j]*ifelse(Uh422[j]<=u[i],1,0)
+	  sum423 <- sum423+varepsilon_hat423[j]*ifelse(Uh423[j]<=u[i],1,0)
+	}
+	for(j in 1:n[5])
+	{
+	  sum511 <- sum511+varepsilon_hat511[j]*ifelse(Uh511[j]<=u[i],1,0)
+	  sum512 <- sum512+varepsilon_hat512[j]*ifelse(Uh512[j]<=u[i],1,0)
+	  sum513 <- sum513+varepsilon_hat513[j]*ifelse(Uh513[j]<=u[i],1,0)
+	  sum521 <- sum521+varepsilon_hat521[j]*ifelse(Uh521[j]<=u[i],1,0)
+	  sum522 <- sum522+varepsilon_hat522[j]*ifelse(Uh522[j]<=u[i],1,0)
+	  sum523 <- sum523+varepsilon_hat523[j]*ifelse(Uh523[j]<=u[i],1,0)
+	}
+	for(j in 1:n[6])
+	{
+	  sum611 <- sum611+varepsilon_hat611[j]*ifelse(Uh611[j]<=u[i],1,0)
+	  sum612 <- sum612+varepsilon_hat612[j]*ifelse(Uh612[j]<=u[i],1,0)
+	  sum613 <- sum613+varepsilon_hat613[j]*ifelse(Uh613[j]<=u[i],1,0)
+	  sum621 <- sum621+varepsilon_hat621[j]*ifelse(Uh621[j]<=u[i],1,0)
+	  sum622 <- sum622+varepsilon_hat622[j]*ifelse(Uh622[j]<=u[i],1,0)
+	  sum623 <- sum623+varepsilon_hat623[j]*ifelse(Uh623[j]<=u[i],1,0)
+	}
+	
+    CRn_hat111[i] <- sum111
+	CRn_hat112[i] <- sum112
+	CRn_hat113[i] <- sum113
+    CRn_hat121[i] <- sum121
+	CRn_hat122[i] <- sum122
+	CRn_hat123[i] <- sum123
+	CRn_hat211[i] <- sum211
+	CRn_hat212[i] <- sum212
+	CRn_hat213[i] <- sum213
+    CRn_hat221[i] <- sum221
+	CRn_hat222[i] <- sum222
+	CRn_hat223[i] <- sum223
+	CRn_hat311[i] <- sum311
+	CRn_hat312[i] <- sum312
+	CRn_hat313[i] <- sum313
+    CRn_hat321[i] <- sum321
+	CRn_hat322[i] <- sum322
+	CRn_hat323[i] <- sum323
+	CRn_hat411[i] <- sum411
+	CRn_hat412[i] <- sum412
+	CRn_hat413[i] <- sum413
+    CRn_hat421[i] <- sum421
+	CRn_hat422[i] <- sum422
+	CRn_hat423[i] <- sum423
+	CRn_hat511[i] <- sum511
+	CRn_hat512[i] <- sum512
+	CRn_hat513[i] <- sum513
+    CRn_hat521[i] <- sum521
+	CRn_hat522[i] <- sum522
+	CRn_hat523[i] <- sum523
+	CRn_hat611[i] <- sum611
+	CRn_hat612[i] <- sum612
+	CRn_hat613[i] <- sum613
+    CRn_hat621[i] <- sum621
+	CRn_hat622[i] <- sum622
+	CRn_hat623[i] <- sum623
+  }
+  CT_n111 <- max(CRn_hat111)
+  CT_n112 <- max(CRn_hat112)
+  CT_n113 <- max(CRn_hat113)
+  CT_n121 <- max(CRn_hat121)
+  CT_n122 <- max(CRn_hat122)
+  CT_n123 <- max(CRn_hat123)
+  CT_n211 <- max(CRn_hat211)
+  CT_n212 <- max(CRn_hat212)
+  CT_n213 <- max(CRn_hat213)
+  CT_n221 <- max(CRn_hat221)
+  CT_n222 <- max(CRn_hat222)
+  CT_n223 <- max(CRn_hat223)
+  CT_n311 <- max(CRn_hat311)
+  CT_n312 <- max(CRn_hat312)
+  CT_n313 <- max(CRn_hat313)
+  CT_n321 <- max(CRn_hat321)
+  CT_n322 <- max(CRn_hat322)
+  CT_n323 <- max(CRn_hat323)
+  CT_n411 <- max(CRn_hat411)
+  CT_n412 <- max(CRn_hat412)
+  CT_n413 <- max(CRn_hat413)
+  CT_n421 <- max(CRn_hat421)
+  CT_n422 <- max(CRn_hat422)
+  CT_n423 <- max(CRn_hat423)
+  CT_n511 <- max(CRn_hat511)
+  CT_n512 <- max(CRn_hat512)
+  CT_n513 <- max(CRn_hat513)
+  CT_n521 <- max(CRn_hat521)
+  CT_n522 <- max(CRn_hat522)
+  CT_n523 <- max(CRn_hat523)
+  CT_n611 <- max(CRn_hat611)
+  CT_n612 <- max(CRn_hat612)
+  CT_n613 <- max(CRn_hat613)
+  CT_n621 <- max(CRn_hat621)
+  CT_n622 <- max(CRn_hat622)
+  CT_n623 <- max(CRn_hat623)
+  CT_n11 <- cbind(CT_n111,CT_n112,CT_n113)
+  CT_n12 <- cbind(CT_n121,CT_n122,CT_n123)
+  CT_n21 <- cbind(CT_n211,CT_n212,CT_n213)
+  CT_n22 <- cbind(CT_n221,CT_n222,CT_n223)
+  CT_n31 <- cbind(CT_n311,CT_n312,CT_n313)
+  CT_n32 <- cbind(CT_n321,CT_n322,CT_n323)
+  CT_n41 <- cbind(CT_n411,CT_n412,CT_n413)
+  CT_n42 <- cbind(CT_n421,CT_n422,CT_n423)
+  CT_n51 <- cbind(CT_n511,CT_n512,CT_n513)
+  CT_n52 <- cbind(CT_n521,CT_n522,CT_n523)
+  CT_n61 <- cbind(CT_n611,CT_n612,CT_n613)
+  CT_n62 <- cbind(CT_n621,CT_n622,CT_n623)
+    
+  return(list(varepsilon_hat11=varepsilon_hat11,varepsilon_hat21=varepsilon_hat21,varepsilon_hat31=varepsilon_hat31,varepsilon_hat41=varepsilon_hat41,varepsilon_hat51=varepsilon_hat51,varepsilon_hat61=varepsilon_hat61,varepsilon_hat12=varepsilon_hat12,varepsilon_hat22=varepsilon_hat22,varepsilon_hat32=varepsilon_hat32,varepsilon_hat42=varepsilon_hat42,varepsilon_hat52=varepsilon_hat52,varepsilon_hat62=varepsilon_hat62,CT_n11=CT_n11,CT_n12=CT_n12,CT_n21=CT_n21,CT_n22=CT_n22,CT_n31=CT_n31,CT_n32=CT_n32,CT_n41=CT_n41,CT_n42=CT_n42,CT_n51=CT_n51,CT_n52=CT_n52,CT_n61=CT_n61,CT_n62=CT_n62)) 
+}
+
+#################################################################
+#Bootstrap procedure
+#################################################################
+bootstrap_test <- function(varepsilon_hat11,varepsilon_hat12,varepsilon_hat21,varepsilon_hat22,varepsilon_hat31,varepsilon_hat32,varepsilon_hat41,varepsilon_hat42,varepsilon_hat51,varepsilon_hat52,varepsilon_hat61,varepsilon_hat62,CT_n11,CT_n12,CT_n21,CT_n22,CT_n31,CT_n32,CT_n41,CT_n42,CT_n51,CT_n52,CT_n61,CT_n62,n,Z_n1,W_n1,Z_n2,W_n2,Z_n3,W_n3,Z_n4,W_n4,Z_n5,W_n5,Z_n6,W_n6,theta_hat11,theta_hat12,Phi1,alpha_hat11,alpha_hat12,X_nt1,h_2_tilde1,theta_hat21,theta_hat22,Phi2,alpha_hat21,alpha_hat22,X_nt2,h_2_tilde2,theta_hat31,theta_hat32,Phi3,alpha_hat31,alpha_hat32,X_nt3,h_2_tilde3,theta_hat41,theta_hat42,Phi4,alpha_hat41,alpha_hat42,X_nt4,h_2_tilde4,theta_hat51,theta_hat52,Phi5,alpha_hat51,alpha_hat52,X_nt5,h_2_tilde5,theta_hat61,theta_hat62,Phi6,alpha_hat61,alpha_hat62,X_nt6,h_2_tilde6,T)
+{
+  #step1: obtain varepsilon_hat and CT_n
+  #step2: 
+  varepsilon1 <- rnorm(n[1],0,1)
+  varepsilon2 <- rnorm(n[2],0,1)
+  varepsilon3 <- rnorm(n[3],0,1)
+  varepsilon4 <- rnorm(n[4],0,1)
+  varepsilon5 <- rnorm(n[5],0,1)
+  varepsilon6 <- rnorm(n[6],0,1)
+  varepsilon_star111 <- varepsilon_hat11[,1]*varepsilon1
+  varepsilon_star112 <- varepsilon_hat11[,2]*varepsilon1
+  varepsilon_star113 <- varepsilon_hat11[,3]*varepsilon1
+  varepsilon_star121 <- varepsilon_hat12[,1]*varepsilon1
+  varepsilon_star122 <- varepsilon_hat12[,2]*varepsilon1
+  varepsilon_star123 <- varepsilon_hat12[,3]*varepsilon1
+  varepsilon_star211 <- varepsilon_hat21[,1]*varepsilon2
+  varepsilon_star212 <- varepsilon_hat21[,2]*varepsilon2
+  varepsilon_star213 <- varepsilon_hat21[,3]*varepsilon2
+  varepsilon_star221 <- varepsilon_hat22[,1]*varepsilon2
+  varepsilon_star222 <- varepsilon_hat22[,2]*varepsilon2
+  varepsilon_star223 <- varepsilon_hat22[,3]*varepsilon2
+  varepsilon_star311 <- varepsilon_hat31[,1]*varepsilon3
+  varepsilon_star312 <- varepsilon_hat31[,2]*varepsilon3
+  varepsilon_star313 <- varepsilon_hat31[,3]*varepsilon3
+  varepsilon_star321 <- varepsilon_hat32[,1]*varepsilon3
+  varepsilon_star322 <- varepsilon_hat32[,2]*varepsilon3
+  varepsilon_star323 <- varepsilon_hat32[,3]*varepsilon3
+  varepsilon_star411 <- varepsilon_hat41[,1]*varepsilon4
+  varepsilon_star412 <- varepsilon_hat41[,2]*varepsilon4
+  varepsilon_star413 <- varepsilon_hat41[,3]*varepsilon4
+  varepsilon_star421 <- varepsilon_hat42[,1]*varepsilon4
+  varepsilon_star422 <- varepsilon_hat42[,2]*varepsilon4
+  varepsilon_star423 <- varepsilon_hat42[,3]*varepsilon4
+  varepsilon_star511 <- varepsilon_hat51[,1]*varepsilon5
+  varepsilon_star512 <- varepsilon_hat51[,2]*varepsilon5
+  varepsilon_star513 <- varepsilon_hat51[,3]*varepsilon5
+  varepsilon_star521 <- varepsilon_hat52[,1]*varepsilon5
+  varepsilon_star522 <- varepsilon_hat52[,2]*varepsilon5
+  varepsilon_star523 <- varepsilon_hat52[,3]*varepsilon5
+  varepsilon_star611 <- varepsilon_hat61[,1]*varepsilon6
+  varepsilon_star612 <- varepsilon_hat61[,2]*varepsilon6
+  varepsilon_star613 <- varepsilon_hat61[,3]*varepsilon6
+  varepsilon_star621 <- varepsilon_hat62[,1]*varepsilon6
+  varepsilon_star622 <- varepsilon_hat62[,2]*varepsilon6
+  varepsilon_star623 <- varepsilon_hat62[,3]*varepsilon6
+  Y_star111 <- ginv(diag(n[1])-theta_hat11[1,1]*W_n1)%*%(Z_n1%*%theta_hat11[2:3,1]-Phi1%*%alpha_hat11[,1]+varepsilon_star111)
+  Y_star112 <- ginv(diag(n[1])-theta_hat11[1,2]*W_n1)%*%(Z_n1%*%theta_hat11[2:3,2]-Phi1%*%alpha_hat11[,2]+varepsilon_star112)
+  Y_star113 <- ginv(diag(n[1])-theta_hat11[1,3]*W_n1)%*%(Z_n1%*%theta_hat11[2:3,3]-Phi1%*%alpha_hat11[,3]+varepsilon_star113)
+  Y_star121 <- ginv(diag(n[1])-theta_hat12[1,1]*W_n1)%*%(Z_n1%*%theta_hat12[2:3,1]-Phi1%*%alpha_hat12[,1]+varepsilon_star121)
+  Y_star122 <- ginv(diag(n[1])-theta_hat12[1,2]*W_n1)%*%(Z_n1%*%theta_hat12[2:3,2]-Phi1%*%alpha_hat12[,2]+varepsilon_star122)
+  Y_star123 <- ginv(diag(n[1])-theta_hat12[1,3]*W_n1)%*%(Z_n1%*%theta_hat12[2:3,3]-Phi1%*%alpha_hat12[,3]+varepsilon_star123)
+  Y_star211 <- ginv(diag(n[2])-theta_hat21[1,1]*W_n2)%*%(Z_n2%*%theta_hat21[2:3,1]-Phi2%*%alpha_hat21[,1]+varepsilon_star211)
+  Y_star212 <- ginv(diag(n[2])-theta_hat21[1,2]*W_n2)%*%(Z_n2%*%theta_hat21[2:3,2]-Phi2%*%alpha_hat21[,2]+varepsilon_star212)
+  Y_star213 <- ginv(diag(n[2])-theta_hat21[1,3]*W_n2)%*%(Z_n2%*%theta_hat21[2:3,3]-Phi2%*%alpha_hat21[,3]+varepsilon_star213)
+  Y_star221 <- ginv(diag(n[2])-theta_hat22[1,1]*W_n2)%*%(Z_n2%*%theta_hat22[2:3,1]-Phi2%*%alpha_hat22[,1]+varepsilon_star221)
+  Y_star222 <- ginv(diag(n[2])-theta_hat22[1,2]*W_n2)%*%(Z_n2%*%theta_hat22[2:3,2]-Phi2%*%alpha_hat22[,2]+varepsilon_star222)
+  Y_star223 <- ginv(diag(n[2])-theta_hat22[1,3]*W_n2)%*%(Z_n2%*%theta_hat22[2:3,3]-Phi2%*%alpha_hat22[,3]+varepsilon_star223)
+  Y_star311 <- ginv(diag(n[3])-theta_hat31[1,1]*W_n3)%*%(Z_n3%*%theta_hat31[2:3,1]-Phi3%*%alpha_hat31[,1]+varepsilon_star311)
+  Y_star312 <- ginv(diag(n[3])-theta_hat31[1,2]*W_n3)%*%(Z_n3%*%theta_hat31[2:3,2]-Phi3%*%alpha_hat31[,2]+varepsilon_star312)
+  Y_star313 <- ginv(diag(n[3])-theta_hat31[1,3]*W_n3)%*%(Z_n3%*%theta_hat31[2:3,3]-Phi3%*%alpha_hat31[,3]+varepsilon_star313)
+  Y_star321 <- ginv(diag(n[3])-theta_hat32[1,1]*W_n3)%*%(Z_n3%*%theta_hat32[2:3,1]-Phi3%*%alpha_hat32[,1]+varepsilon_star321)
+  Y_star322 <- ginv(diag(n[3])-theta_hat32[1,2]*W_n3)%*%(Z_n3%*%theta_hat32[2:3,2]-Phi3%*%alpha_hat32[,2]+varepsilon_star322)
+  Y_star323 <- ginv(diag(n[3])-theta_hat32[1,3]*W_n3)%*%(Z_n3%*%theta_hat32[2:3,3]-Phi3%*%alpha_hat32[,3]+varepsilon_star323)
+  Y_star411 <- ginv(diag(n[4])-theta_hat41[1,1]*W_n4)%*%(Z_n4%*%theta_hat41[2:3,1]-Phi4%*%alpha_hat41[,1]+varepsilon_star411)
+  Y_star412 <- ginv(diag(n[4])-theta_hat41[1,2]*W_n4)%*%(Z_n4%*%theta_hat41[2:3,2]-Phi4%*%alpha_hat41[,2]+varepsilon_star412)
+  Y_star413 <- ginv(diag(n[4])-theta_hat41[1,3]*W_n4)%*%(Z_n4%*%theta_hat41[2:3,3]-Phi4%*%alpha_hat41[,3]+varepsilon_star413)
+  Y_star421 <- ginv(diag(n[4])-theta_hat42[1,1]*W_n4)%*%(Z_n4%*%theta_hat42[2:3,1]-Phi4%*%alpha_hat42[,1]+varepsilon_star421)
+  Y_star422 <- ginv(diag(n[4])-theta_hat42[1,2]*W_n4)%*%(Z_n4%*%theta_hat42[2:3,2]-Phi4%*%alpha_hat42[,2]+varepsilon_star422)
+  Y_star423 <- ginv(diag(n[4])-theta_hat42[1,3]*W_n4)%*%(Z_n4%*%theta_hat42[2:3,3]-Phi4%*%alpha_hat42[,3]+varepsilon_star423)
+  Y_star511 <- ginv(diag(n[5])-theta_hat51[1,1]*W_n5)%*%(Z_n5%*%theta_hat51[2:3,1]-Phi5%*%alpha_hat51[,1]+varepsilon_star511)
+  Y_star512 <- ginv(diag(n[5])-theta_hat51[1,2]*W_n5)%*%(Z_n5%*%theta_hat51[2:3,2]-Phi5%*%alpha_hat51[,2]+varepsilon_star512)
+  Y_star513 <- ginv(diag(n[5])-theta_hat51[1,3]*W_n5)%*%(Z_n5%*%theta_hat51[2:3,3]-Phi5%*%alpha_hat51[,3]+varepsilon_star513)
+  Y_star521 <- ginv(diag(n[5])-theta_hat52[1,1]*W_n5)%*%(Z_n5%*%theta_hat52[2:3,1]-Phi5%*%alpha_hat52[,1]+varepsilon_star521)
+  Y_star522 <- ginv(diag(n[5])-theta_hat52[1,2]*W_n5)%*%(Z_n5%*%theta_hat52[2:3,2]-Phi5%*%alpha_hat52[,2]+varepsilon_star522)
+  Y_star523 <- ginv(diag(n[5])-theta_hat52[1,3]*W_n5)%*%(Z_n5%*%theta_hat52[2:3,3]-Phi5%*%alpha_hat52[,3]+varepsilon_star523)
+  Y_star611 <- ginv(diag(n[6])-theta_hat61[1,1]*W_n6)%*%(Z_n6%*%theta_hat61[2:3,1]-Phi6%*%alpha_hat61[,1]+varepsilon_star611)
+  Y_star612 <- ginv(diag(n[6])-theta_hat61[1,2]*W_n6)%*%(Z_n6%*%theta_hat61[2:3,2]-Phi6%*%alpha_hat61[,2]+varepsilon_star612)
+  Y_star613 <- ginv(diag(n[6])-theta_hat61[1,3]*W_n6)%*%(Z_n6%*%theta_hat61[2:3,3]-Phi6%*%alpha_hat61[,3]+varepsilon_star613)
+  Y_star621 <- ginv(diag(n[6])-theta_hat62[1,1]*W_n6)%*%(Z_n6%*%theta_hat62[2:3,1]-Phi6%*%alpha_hat62[,1]+varepsilon_star621)
+  Y_star622 <- ginv(diag(n[6])-theta_hat62[1,2]*W_n6)%*%(Z_n6%*%theta_hat62[2:3,2]-Phi6%*%alpha_hat62[,2]+varepsilon_star622)
+  Y_star623 <- ginv(diag(n[6])-theta_hat62[1,3]*W_n6)%*%(Z_n6%*%theta_hat62[2:3,3]-Phi6%*%alpha_hat62[,3]+varepsilon_star623)
+  Y_star11 <- cbind(Y_star111,Y_star112,Y_star113)
+  Y_star12 <- cbind(Y_star121,Y_star122,Y_star123)
+  Y_star21 <- cbind(Y_star211,Y_star212,Y_star213)
+  Y_star22 <- cbind(Y_star221,Y_star222,Y_star223)
+  Y_star31 <- cbind(Y_star311,Y_star312,Y_star313)
+  Y_star32 <- cbind(Y_star321,Y_star322,Y_star323)
+  Y_star41 <- cbind(Y_star411,Y_star412,Y_star413)
+  Y_star42 <- cbind(Y_star421,Y_star422,Y_star423)
+  Y_star51 <- cbind(Y_star511,Y_star512,Y_star513)
+  Y_star52 <- cbind(Y_star521,Y_star522,Y_star523)
+  Y_star61 <- cbind(Y_star611,Y_star612,Y_star613)
+  Y_star62 <- cbind(Y_star621,Y_star622,Y_star623)
+  #step3:
+  thetaalpha <- thetaalpha_hat(Z_n1,Z_n2,Z_n3,Z_n4,Z_n5,Z_n6,W_n1,W_n2,W_n3,W_n4,W_n5,W_n6,Y_star11,Y_star12,Y_star21,Y_star22,Y_star31,Y_star32,Y_star41,Y_star42,Y_star51,Y_star52,Y_star61,Y_star62,n,Phi1,Phi2,Phi3,Phi4,Phi5,Phi6,T)
+  theta_hat_star11 <- thetaalpha$theta_hat11
+  theta_hat_star12 <- thetaalpha$theta_hat12
+  theta_hat_star21 <- thetaalpha$theta_hat21
+  theta_hat_star22 <- thetaalpha$theta_hat22
+  theta_hat_star31 <- thetaalpha$theta_hat31
+  theta_hat_star32 <- thetaalpha$theta_hat32
+  theta_hat_star41 <- thetaalpha$theta_hat41
+  theta_hat_star42 <- thetaalpha$theta_hat42
+  theta_hat_star51 <- thetaalpha$theta_hat51
+  theta_hat_star52 <- thetaalpha$theta_hat52
+  theta_hat_star61 <- thetaalpha$theta_hat61
+  theta_hat_star62 <- thetaalpha$theta_hat62
+  alpha_hat_star11 <- thetaalpha$alpha_hat11
+  alpha_hat_star12 <- thetaalpha$alpha_hat12
+  alpha_hat_star21 <- thetaalpha$alpha_hat21
+  alpha_hat_star22 <- thetaalpha$alpha_hat22
+  alpha_hat_star31 <- thetaalpha$alpha_hat31
+  alpha_hat_star32 <- thetaalpha$alpha_hat32
+  alpha_hat_star41 <- thetaalpha$alpha_hat41
+  alpha_hat_star42 <- thetaalpha$alpha_hat42
+  alpha_hat_star51 <- thetaalpha$alpha_hat51
+  alpha_hat_star52 <- thetaalpha$alpha_hat52
+  alpha_hat_star61 <- thetaalpha$alpha_hat61
+  alpha_hat_star62 <- thetaalpha$alpha_hat62
+  
+  varepsilon_hat_star111 <- Y_star11[,1]-theta_hat_star11[1,1]*W_n1%*%Y_star11[,1]-Z_n1%*%theta_hat_star11[2:3,1]-Phi1%*%alpha_hat_star11[,1]
+  varepsilon_hat_star112 <- Y_star11[,2]-theta_hat_star11[1,2]*W_n1%*%Y_star11[,2]-Z_n1%*%theta_hat_star11[2:3,2]-Phi1%*%alpha_hat_star11[,2]
+  varepsilon_hat_star113 <- Y_star11[,3]-theta_hat_star11[1,3]*W_n1%*%Y_star11[,3]-Z_n1%*%theta_hat_star11[2:3,3]-Phi1%*%alpha_hat_star11[,3]
+  varepsilon_hat_star121 <- Y_star12[,1]-theta_hat_star12[1,1]*W_n1%*%Y_star12[,1]-Z_n1%*%theta_hat_star12[2:3,1]-Phi1%*%alpha_hat_star12[,1]
+  varepsilon_hat_star122 <- Y_star12[,2]-theta_hat_star12[1,2]*W_n1%*%Y_star12[,2]-Z_n1%*%theta_hat_star12[2:3,2]-Phi1%*%alpha_hat_star12[,2]
+  varepsilon_hat_star123 <- Y_star12[,3]-theta_hat_star12[1,3]*W_n1%*%Y_star12[,3]-Z_n1%*%theta_hat_star12[2:3,3]-Phi1%*%alpha_hat_star12[,3]
+  varepsilon_hat_star211 <- Y_star21[,1]-theta_hat_star21[1,1]*W_n2%*%Y_star21[,1]-Z_n2%*%theta_hat_star21[2:3,1]-Phi2%*%alpha_hat_star21[,1]
+  varepsilon_hat_star212 <- Y_star21[,2]-theta_hat_star21[1,2]*W_n2%*%Y_star21[,2]-Z_n2%*%theta_hat_star21[2:3,2]-Phi2%*%alpha_hat_star21[,2]
+  varepsilon_hat_star213 <- Y_star21[,3]-theta_hat_star21[1,3]*W_n2%*%Y_star21[,3]-Z_n2%*%theta_hat_star21[2:3,3]-Phi2%*%alpha_hat_star21[,3]
+  varepsilon_hat_star221 <- Y_star22[,1]-theta_hat_star22[1,1]*W_n2%*%Y_star22[,1]-Z_n2%*%theta_hat_star22[2:3,1]-Phi2%*%alpha_hat_star22[,1]
+  varepsilon_hat_star222 <- Y_star22[,2]-theta_hat_star22[1,2]*W_n2%*%Y_star22[,2]-Z_n2%*%theta_hat_star22[2:3,2]-Phi2%*%alpha_hat_star22[,2]
+  varepsilon_hat_star223 <- Y_star22[,3]-theta_hat_star22[1,3]*W_n2%*%Y_star22[,3]-Z_n2%*%theta_hat_star22[2:3,3]-Phi2%*%alpha_hat_star22[,3]
+  varepsilon_hat_star311 <- Y_star31[,1]-theta_hat_star31[1,1]*W_n3%*%Y_star31[,1]-Z_n3%*%theta_hat_star31[2:3,1]-Phi3%*%alpha_hat_star31[,1]
+  varepsilon_hat_star312 <- Y_star31[,2]-theta_hat_star31[1,2]*W_n3%*%Y_star31[,2]-Z_n3%*%theta_hat_star31[2:3,2]-Phi3%*%alpha_hat_star31[,2]
+  varepsilon_hat_star313 <- Y_star31[,3]-theta_hat_star31[1,3]*W_n3%*%Y_star31[,3]-Z_n3%*%theta_hat_star31[2:3,3]-Phi3%*%alpha_hat_star31[,3]
+  varepsilon_hat_star321 <- Y_star32[,1]-theta_hat_star32[1,1]*W_n3%*%Y_star32[,1]-Z_n3%*%theta_hat_star32[2:3,1]-Phi3%*%alpha_hat_star32[,1]
+  varepsilon_hat_star322 <- Y_star32[,2]-theta_hat_star32[1,2]*W_n3%*%Y_star32[,2]-Z_n3%*%theta_hat_star32[2:3,2]-Phi3%*%alpha_hat_star32[,2]
+  varepsilon_hat_star323 <- Y_star32[,3]-theta_hat_star32[1,3]*W_n3%*%Y_star32[,3]-Z_n3%*%theta_hat_star32[2:3,3]-Phi3%*%alpha_hat_star32[,3]
+  varepsilon_hat_star411 <- Y_star41[,1]-theta_hat_star41[1,1]*W_n4%*%Y_star41[,1]-Z_n4%*%theta_hat_star41[2:3,1]-Phi4%*%alpha_hat_star41[,1]
+  varepsilon_hat_star412 <- Y_star41[,2]-theta_hat_star41[1,2]*W_n4%*%Y_star41[,2]-Z_n4%*%theta_hat_star41[2:3,2]-Phi4%*%alpha_hat_star41[,2]
+  varepsilon_hat_star413 <- Y_star41[,3]-theta_hat_star41[1,3]*W_n4%*%Y_star41[,3]-Z_n4%*%theta_hat_star41[2:3,3]-Phi4%*%alpha_hat_star41[,3]
+  varepsilon_hat_star421 <- Y_star42[,1]-theta_hat_star42[1,1]*W_n4%*%Y_star42[,1]-Z_n4%*%theta_hat_star42[2:3,1]-Phi4%*%alpha_hat_star42[,1]
+  varepsilon_hat_star422 <- Y_star42[,2]-theta_hat_star42[1,2]*W_n4%*%Y_star42[,2]-Z_n4%*%theta_hat_star42[2:3,2]-Phi4%*%alpha_hat_star42[,2]
+  varepsilon_hat_star423 <- Y_star42[,3]-theta_hat_star42[1,3]*W_n4%*%Y_star42[,3]-Z_n4%*%theta_hat_star42[2:3,3]-Phi4%*%alpha_hat_star42[,3]
+  varepsilon_hat_star511 <- Y_star51[,1]-theta_hat_star51[1,1]*W_n5%*%Y_star51[,1]-Z_n5%*%theta_hat_star51[2:3,1]-Phi5%*%alpha_hat_star51[,1]
+  varepsilon_hat_star512 <- Y_star51[,2]-theta_hat_star51[1,2]*W_n5%*%Y_star51[,2]-Z_n5%*%theta_hat_star51[2:3,2]-Phi5%*%alpha_hat_star51[,2]
+  varepsilon_hat_star513 <- Y_star51[,3]-theta_hat_star51[1,3]*W_n5%*%Y_star51[,3]-Z_n5%*%theta_hat_star51[2:3,3]-Phi5%*%alpha_hat_star51[,3]
+  varepsilon_hat_star521 <- Y_star52[,1]-theta_hat_star52[1,1]*W_n5%*%Y_star52[,1]-Z_n5%*%theta_hat_star52[2:3,1]-Phi5%*%alpha_hat_star52[,1]
+  varepsilon_hat_star522 <- Y_star52[,2]-theta_hat_star52[1,2]*W_n5%*%Y_star52[,2]-Z_n5%*%theta_hat_star52[2:3,2]-Phi5%*%alpha_hat_star52[,2]
+  varepsilon_hat_star523 <- Y_star52[,3]-theta_hat_star52[1,3]*W_n5%*%Y_star52[,3]-Z_n5%*%theta_hat_star52[2:3,3]-Phi5%*%alpha_hat_star52[,3]
+  varepsilon_hat_star611 <- Y_star61[,1]-theta_hat_star61[1,1]*W_n6%*%Y_star61[,1]-Z_n6%*%theta_hat_star61[2:3,1]-Phi6%*%alpha_hat_star61[,1]
+  varepsilon_hat_star612 <- Y_star61[,2]-theta_hat_star61[1,2]*W_n6%*%Y_star61[,2]-Z_n6%*%theta_hat_star61[2:3,2]-Phi6%*%alpha_hat_star61[,2]
+  varepsilon_hat_star613 <- Y_star61[,3]-theta_hat_star61[1,3]*W_n6%*%Y_star61[,3]-Z_n6%*%theta_hat_star61[2:3,3]-Phi6%*%alpha_hat_star61[,3]
+  varepsilon_hat_star621 <- Y_star62[,1]-theta_hat_star62[1,1]*W_n6%*%Y_star62[,1]-Z_n6%*%theta_hat_star62[2:3,1]-Phi6%*%alpha_hat_star62[,1]
+  varepsilon_hat_star622 <- Y_star62[,2]-theta_hat_star62[1,2]*W_n6%*%Y_star62[,2]-Z_n6%*%theta_hat_star62[2:3,2]-Phi6%*%alpha_hat_star62[,2]
+  varepsilon_hat_star623 <- Y_star62[,3]-theta_hat_star62[1,3]*W_n6%*%Y_star62[,3]-Z_n6%*%theta_hat_star62[2:3,3]-Phi6%*%alpha_hat_star62[,3]
+  #step4:
+  h_mod111 <- sum(h_2_tilde1^2)+sum((theta_hat11[2:3,1])^2)
+  h_mod112 <- sum(h_2_tilde1^2)+sum((theta_hat11[2:3,2])^2)
+  h_mod113 <- sum(h_2_tilde1^2)+sum((theta_hat11[2:3,3])^2)
+  h_mod121 <- sum(h_2_tilde1^2)+sum((theta_hat12[2:3,1])^2)
+  h_mod122 <- sum(h_2_tilde1^2)+sum((theta_hat12[2:3,2])^2)
+  h_mod123 <- sum(h_2_tilde1^2)+sum((theta_hat12[2:3,3])^2)
+  h_mod211 <- sum(h_2_tilde2^2)+sum((theta_hat21[2:3,1])^2)
+  h_mod212 <- sum(h_2_tilde2^2)+sum((theta_hat21[2:3,2])^2)
+  h_mod213 <- sum(h_2_tilde2^2)+sum((theta_hat21[2:3,3])^2)
+  h_mod221 <- sum(h_2_tilde2^2)+sum((theta_hat22[2:3,1])^2)
+  h_mod222 <- sum(h_2_tilde2^2)+sum((theta_hat22[2:3,2])^2)
+  h_mod223 <- sum(h_2_tilde2^2)+sum((theta_hat22[2:3,3])^2)
+  h_mod311 <- sum(h_2_tilde3^2)+sum((theta_hat31[2:3,1])^2)
+  h_mod312 <- sum(h_2_tilde3^2)+sum((theta_hat31[2:3,2])^2)
+  h_mod313 <- sum(h_2_tilde3^2)+sum((theta_hat31[2:3,3])^2)
+  h_mod321 <- sum(h_2_tilde3^2)+sum((theta_hat32[2:3,1])^2)
+  h_mod322 <- sum(h_2_tilde3^2)+sum((theta_hat32[2:3,2])^2)
+  h_mod323 <- sum(h_2_tilde3^2)+sum((theta_hat32[2:3,3])^2)
+  h_mod411 <- sum(h_2_tilde4^2)+sum((theta_hat41[2:3,1])^2)
+  h_mod412 <- sum(h_2_tilde4^2)+sum((theta_hat41[2:3,2])^2)
+  h_mod413 <- sum(h_2_tilde4^2)+sum((theta_hat41[2:3,3])^2)
+  h_mod421 <- sum(h_2_tilde4^2)+sum((theta_hat42[2:3,1])^2)
+  h_mod422 <- sum(h_2_tilde4^2)+sum((theta_hat42[2:3,2])^2)
+  h_mod423 <- sum(h_2_tilde4^2)+sum((theta_hat42[2:3,3])^2)
+  h_mod511 <- sum(h_2_tilde5^2)+sum((theta_hat51[2:3,1])^2)
+  h_mod512 <- sum(h_2_tilde5^2)+sum((theta_hat51[2:3,2])^2)
+  h_mod513 <- sum(h_2_tilde5^2)+sum((theta_hat51[2:3,3])^2)
+  h_mod521 <- sum(h_2_tilde5^2)+sum((theta_hat52[2:3,1])^2)
+  h_mod522 <- sum(h_2_tilde5^2)+sum((theta_hat52[2:3,2])^2)
+  h_mod523 <- sum(h_2_tilde5^2)+sum((theta_hat52[2:3,3])^2)
+  h_mod611 <- sum(h_2_tilde6^2)+sum((theta_hat61[2:3,1])^2)
+  h_mod612 <- sum(h_2_tilde6^2)+sum((theta_hat61[2:3,2])^2)
+  h_mod613 <- sum(h_2_tilde6^2)+sum((theta_hat61[2:3,3])^2)
+  h_mod621 <- sum(h_2_tilde6^2)+sum((theta_hat62[2:3,1])^2)
+  h_mod622 <- sum(h_2_tilde6^2)+sum((theta_hat62[2:3,2])^2)
+  h_mod623 <- sum(h_2_tilde6^2)+sum((theta_hat62[2:3,3])^2)
+  h_111 <- theta_hat11[2:3,1]/sqrt(h_mod111)
+  h_112 <- theta_hat11[2:3,2]/sqrt(h_mod112)
+  h_113 <- theta_hat11[2:3,3]/sqrt(h_mod113)
+  h_121 <- theta_hat12[2:3,1]/sqrt(h_mod121)
+  h_122 <- theta_hat12[2:3,2]/sqrt(h_mod122)
+  h_123 <- theta_hat12[2:3,3]/sqrt(h_mod123)
+  h_211 <- theta_hat21[2:3,1]/sqrt(h_mod211)
+  h_212 <- theta_hat21[2:3,2]/sqrt(h_mod212)
+  h_213 <- theta_hat21[2:3,3]/sqrt(h_mod213)
+  h_221 <- theta_hat22[2:3,1]/sqrt(h_mod221)
+  h_222 <- theta_hat22[2:3,2]/sqrt(h_mod222)
+  h_223 <- theta_hat22[2:3,3]/sqrt(h_mod223)
+  h_311 <- theta_hat31[2:3,1]/sqrt(h_mod311)
+  h_312 <- theta_hat31[2:3,2]/sqrt(h_mod312)
+  h_313 <- theta_hat31[2:3,3]/sqrt(h_mod313)
+  h_321 <- theta_hat32[2:3,1]/sqrt(h_mod321)
+  h_322 <- theta_hat32[2:3,2]/sqrt(h_mod322)
+  h_323 <- theta_hat32[2:3,3]/sqrt(h_mod323)
+  h_411 <- theta_hat41[2:3,1]/sqrt(h_mod411)
+  h_412 <- theta_hat41[2:3,2]/sqrt(h_mod412)
+  h_413 <- theta_hat41[2:3,3]/sqrt(h_mod413)
+  h_421 <- theta_hat42[2:3,1]/sqrt(h_mod421)
+  h_422 <- theta_hat42[2:3,2]/sqrt(h_mod422)
+  h_423 <- theta_hat42[2:3,3]/sqrt(h_mod423)
+  h_511 <- theta_hat51[2:3,1]/sqrt(h_mod511)
+  h_512 <- theta_hat51[2:3,2]/sqrt(h_mod512)
+  h_513 <- theta_hat51[2:3,3]/sqrt(h_mod513)
+  h_521 <- theta_hat52[2:3,1]/sqrt(h_mod521)
+  h_522 <- theta_hat52[2:3,2]/sqrt(h_mod522)
+  h_523 <- theta_hat52[2:3,3]/sqrt(h_mod523)
+  h_611 <- theta_hat61[2:3,1]/sqrt(h_mod611)
+  h_612 <- theta_hat61[2:3,2]/sqrt(h_mod612)
+  h_613 <- theta_hat61[2:3,3]/sqrt(h_mod613)
+  h_621 <- theta_hat62[2:3,1]/sqrt(h_mod621)
+  h_622 <- theta_hat62[2:3,2]/sqrt(h_mod622)
+  h_623 <- theta_hat62[2:3,3]/sqrt(h_mod623)
+  h_1211 <- h_2_tilde1/sqrt(h_mod111)
+  h_1212 <- h_2_tilde1/sqrt(h_mod112)
+  h_1213 <- h_2_tilde1/sqrt(h_mod113)
+  h_1221 <- h_2_tilde1/sqrt(h_mod121)
+  h_1222 <- h_2_tilde1/sqrt(h_mod122)
+  h_1223 <- h_2_tilde1/sqrt(h_mod123)
+  h_2211 <- h_2_tilde2/sqrt(h_mod211)
+  h_2212 <- h_2_tilde2/sqrt(h_mod212)
+  h_2213 <- h_2_tilde2/sqrt(h_mod213)
+  h_2221 <- h_2_tilde2/sqrt(h_mod221)
+  h_2222 <- h_2_tilde2/sqrt(h_mod222)
+  h_2223 <- h_2_tilde2/sqrt(h_mod223) 
+  h_3211 <- h_2_tilde3/sqrt(h_mod311)
+  h_3212 <- h_2_tilde3/sqrt(h_mod312)
+  h_3213 <- h_2_tilde3/sqrt(h_mod313)
+  h_3221 <- h_2_tilde3/sqrt(h_mod321)
+  h_3222 <- h_2_tilde3/sqrt(h_mod322)
+  h_3223 <- h_2_tilde3/sqrt(h_mod323) 
+  h_4211 <- h_2_tilde4/sqrt(h_mod411)
+  h_4212 <- h_2_tilde4/sqrt(h_mod412)
+  h_4213 <- h_2_tilde4/sqrt(h_mod413)
+  h_4221 <- h_2_tilde4/sqrt(h_mod421)
+  h_4222 <- h_2_tilde4/sqrt(h_mod422)
+  h_4223 <- h_2_tilde4/sqrt(h_mod423) 
+  h_5211 <- h_2_tilde5/sqrt(h_mod511)
+  h_5212 <- h_2_tilde5/sqrt(h_mod512)
+  h_5213 <- h_2_tilde5/sqrt(h_mod513)
+  h_5221 <- h_2_tilde5/sqrt(h_mod521)
+  h_5222 <- h_2_tilde5/sqrt(h_mod522)
+  h_5223 <- h_2_tilde5/sqrt(h_mod523) 
+  h_6211 <- h_2_tilde6/sqrt(h_mod611)
+  h_6212 <- h_2_tilde6/sqrt(h_mod612)
+  h_6213 <- h_2_tilde6/sqrt(h_mod613)
+  h_6221 <- h_2_tilde6/sqrt(h_mod621)
+  h_6222 <- h_2_tilde6/sqrt(h_mod622)
+  h_6223 <- h_2_tilde6/sqrt(h_mod623)   
+  Uh111 <- Z_n1%*%h_111+X_nt1%*%h_1211/100
+  Uh112 <- Z_n1%*%h_112+X_nt1%*%h_1212/100
+  Uh113 <- Z_n1%*%h_113+X_nt1%*%h_1213/100
+  Uh121 <- Z_n1%*%h_121+X_nt1%*%h_1221/100
+  Uh122 <- Z_n1%*%h_122+X_nt1%*%h_1222/100
+  Uh123 <- Z_n1%*%h_123+X_nt1%*%h_1223/100
+  Uh211 <- Z_n2%*%h_211+X_nt2%*%h_2211/100
+  Uh212 <- Z_n2%*%h_212+X_nt2%*%h_2212/100
+  Uh213 <- Z_n2%*%h_213+X_nt2%*%h_2213/100
+  Uh221 <- Z_n2%*%h_221+X_nt2%*%h_2221/100
+  Uh222 <- Z_n2%*%h_222+X_nt2%*%h_2222/100
+  Uh223 <- Z_n2%*%h_223+X_nt2%*%h_2223/100
+  Uh311 <- Z_n3%*%h_311+X_nt3%*%h_3211/100
+  Uh312 <- Z_n3%*%h_312+X_nt3%*%h_3212/100
+  Uh313 <- Z_n3%*%h_313+X_nt3%*%h_3213/100
+  Uh321 <- Z_n3%*%h_321+X_nt3%*%h_3221/100
+  Uh322 <- Z_n3%*%h_322+X_nt3%*%h_3222/100
+  Uh323 <- Z_n3%*%h_323+X_nt3%*%h_3223/100
+  Uh411 <- Z_n4%*%h_411+X_nt4%*%h_4211/100
+  Uh412 <- Z_n4%*%h_412+X_nt4%*%h_4212/100
+  Uh413 <- Z_n4%*%h_413+X_nt4%*%h_4213/100
+  Uh421 <- Z_n4%*%h_421+X_nt4%*%h_4221/100
+  Uh422 <- Z_n4%*%h_422+X_nt4%*%h_4222/100
+  Uh423 <- Z_n4%*%h_423+X_nt4%*%h_4223/100
+  Uh511 <- Z_n5%*%h_511+X_nt5%*%h_5211/100
+  Uh512 <- Z_n5%*%h_512+X_nt5%*%h_5212/100
+  Uh513 <- Z_n5%*%h_513+X_nt5%*%h_5213/100
+  Uh521 <- Z_n5%*%h_521+X_nt5%*%h_5221/100
+  Uh522 <- Z_n5%*%h_522+X_nt5%*%h_5222/100
+  Uh523 <- Z_n5%*%h_523+X_nt5%*%h_5223/100
+  Uh611 <- Z_n6%*%h_611+X_nt6%*%h_6211/100
+  Uh612 <- Z_n6%*%h_612+X_nt6%*%h_6212/100
+  Uh613 <- Z_n6%*%h_613+X_nt6%*%h_6213/100
+  Uh621 <- Z_n6%*%h_621+X_nt6%*%h_6221/100
+  Uh622 <- Z_n6%*%h_622+X_nt6%*%h_6222/100
+  Uh623 <- Z_n6%*%h_623+X_nt6%*%h_6223/100
+  u <- runif(100)
+  CRn_hat_star111 <- rep(0,100)
+  CRn_hat_star112 <- rep(0,100)
+  CRn_hat_star113 <- rep(0,100)
+  CRn_hat_star121 <- rep(0,100)
+  CRn_hat_star122 <- rep(0,100)
+  CRn_hat_star123 <- rep(0,100)
+  CRn_hat_star211 <- rep(0,100)
+  CRn_hat_star212 <- rep(0,100)
+  CRn_hat_star213 <- rep(0,100)
+  CRn_hat_star221 <- rep(0,100)
+  CRn_hat_star222 <- rep(0,100)
+  CRn_hat_star223 <- rep(0,100)
+  CRn_hat_star311 <- rep(0,100)
+  CRn_hat_star312 <- rep(0,100)
+  CRn_hat_star313 <- rep(0,100)
+  CRn_hat_star321 <- rep(0,100)
+  CRn_hat_star322 <- rep(0,100)
+  CRn_hat_star323 <- rep(0,100)
+  CRn_hat_star411 <- rep(0,100)
+  CRn_hat_star412 <- rep(0,100)
+  CRn_hat_star413 <- rep(0,100)
+  CRn_hat_star421 <- rep(0,100)
+  CRn_hat_star422 <- rep(0,100)
+  CRn_hat_star423 <- rep(0,100)
+  CRn_hat_star511 <- rep(0,100)
+  CRn_hat_star512 <- rep(0,100)
+  CRn_hat_star513 <- rep(0,100)
+  CRn_hat_star521 <- rep(0,100)
+  CRn_hat_star522 <- rep(0,100)
+  CRn_hat_star523 <- rep(0,100)
+  CRn_hat_star611 <- rep(0,100)
+  CRn_hat_star612 <- rep(0,100)
+  CRn_hat_star613 <- rep(0,100)
+  CRn_hat_star621 <- rep(0,100)
+  CRn_hat_star622 <- rep(0,100)
+  CRn_hat_star623 <- rep(0,100)
+  for(i in 1:100)
+  { 
+    sum_star111 <- 0
+	sum_star112 <- 0
+	sum_star113 <- 0
+    sum_star121 <- 0
+	sum_star122 <- 0
+	sum_star123 <- 0
+	sum_star211 <- 0
+	sum_star212 <- 0
+	sum_star213 <- 0
+    sum_star221 <- 0
+	sum_star222 <- 0
+	sum_star223 <- 0
+	sum_star311 <- 0
+	sum_star312 <- 0
+	sum_star313 <- 0
+    sum_star321 <- 0
+	sum_star322 <- 0
+	sum_star323 <- 0
+	sum_star411 <- 0
+	sum_star412 <- 0
+	sum_star413 <- 0
+    sum_star421 <- 0
+	sum_star422 <- 0
+	sum_star423 <- 0
+	sum_star511 <- 0
+	sum_star512 <- 0
+	sum_star513 <- 0
+    sum_star521 <- 0
+	sum_star522 <- 0
+	sum_star523 <- 0
+	sum_star611 <- 0
+	sum_star612 <- 0
+	sum_star613 <- 0
+    sum_star621 <- 0
+	sum_star622 <- 0
+	sum_star623 <- 0
+    for(j in 1:n[1])
+	{
+	  sum_star111 <- sum_star111+varepsilon_hat_star111[j]*ifelse(Uh111[j]<=u[i],1,0)
+	  sum_star112 <- sum_star112+varepsilon_hat_star112[j]*ifelse(Uh112[j]<=u[i],1,0)
+	  sum_star113 <- sum_star113+varepsilon_hat_star113[j]*ifelse(Uh113[j]<=u[i],1,0)
+	  sum_star121 <- sum_star121+varepsilon_hat_star121[j]*ifelse(Uh121[j]<=u[i],1,0)
+	  sum_star122 <- sum_star122+varepsilon_hat_star122[j]*ifelse(Uh122[j]<=u[i],1,0)
+	  sum_star123 <- sum_star123+varepsilon_hat_star123[j]*ifelse(Uh123[j]<=u[i],1,0)
+	}
+	for(j in 1:n[2])
+	{
+	  sum_star211 <- sum_star211+varepsilon_hat_star211[j]*ifelse(Uh211[j]<=u[i],1,0)
+	  sum_star212 <- sum_star212+varepsilon_hat_star212[j]*ifelse(Uh212[j]<=u[i],1,0)
+	  sum_star213 <- sum_star213+varepsilon_hat_star213[j]*ifelse(Uh213[j]<=u[i],1,0)
+	  sum_star221 <- sum_star221+varepsilon_hat_star221[j]*ifelse(Uh221[j]<=u[i],1,0)
+	  sum_star222 <- sum_star222+varepsilon_hat_star222[j]*ifelse(Uh222[j]<=u[i],1,0)
+	  sum_star223 <- sum_star223+varepsilon_hat_star223[j]*ifelse(Uh223[j]<=u[i],1,0)
+	}
+	for(j in 1:n[3])
+	{
+	  sum_star311 <- sum_star311+varepsilon_hat_star311[j]*ifelse(Uh311[j]<=u[i],1,0)
+	  sum_star312 <- sum_star312+varepsilon_hat_star312[j]*ifelse(Uh312[j]<=u[i],1,0)
+	  sum_star313 <- sum_star313+varepsilon_hat_star313[j]*ifelse(Uh313[j]<=u[i],1,0)
+	  sum_star321 <- sum_star321+varepsilon_hat_star321[j]*ifelse(Uh321[j]<=u[i],1,0)
+	  sum_star322 <- sum_star322+varepsilon_hat_star322[j]*ifelse(Uh322[j]<=u[i],1,0)
+	  sum_star323 <- sum_star323+varepsilon_hat_star323[j]*ifelse(Uh323[j]<=u[i],1,0)
+	}
+	for(j in 1:n[4])
+	{
+	  sum_star411 <- sum_star411+varepsilon_hat_star411[j]*ifelse(Uh411[j]<=u[i],1,0)
+	  sum_star412 <- sum_star412+varepsilon_hat_star412[j]*ifelse(Uh412[j]<=u[i],1,0)
+	  sum_star413 <- sum_star413+varepsilon_hat_star413[j]*ifelse(Uh413[j]<=u[i],1,0)
+	  sum_star421 <- sum_star421+varepsilon_hat_star421[j]*ifelse(Uh421[j]<=u[i],1,0)
+	  sum_star422 <- sum_star422+varepsilon_hat_star422[j]*ifelse(Uh422[j]<=u[i],1,0)
+	  sum_star423 <- sum_star423+varepsilon_hat_star423[j]*ifelse(Uh423[j]<=u[i],1,0)
+	}
+	for(j in 1:n[5])
+	{
+	  sum_star511 <- sum_star511+varepsilon_hat_star511[j]*ifelse(Uh511[j]<=u[i],1,0)
+	  sum_star512 <- sum_star512+varepsilon_hat_star512[j]*ifelse(Uh512[j]<=u[i],1,0)
+	  sum_star513 <- sum_star513+varepsilon_hat_star513[j]*ifelse(Uh513[j]<=u[i],1,0)
+	  sum_star521 <- sum_star521+varepsilon_hat_star521[j]*ifelse(Uh521[j]<=u[i],1,0)
+	  sum_star522 <- sum_star522+varepsilon_hat_star522[j]*ifelse(Uh522[j]<=u[i],1,0)
+	  sum_star523 <- sum_star523+varepsilon_hat_star523[j]*ifelse(Uh523[j]<=u[i],1,0)
+	}
+	for(j in 1:n[6])
+	{
+	  sum_star611 <- sum_star611+varepsilon_hat_star611[j]*ifelse(Uh611[j]<=u[i],1,0)
+	  sum_star612 <- sum_star612+varepsilon_hat_star612[j]*ifelse(Uh612[j]<=u[i],1,0)
+	  sum_star613 <- sum_star613+varepsilon_hat_star613[j]*ifelse(Uh613[j]<=u[i],1,0)
+	  sum_star621 <- sum_star621+varepsilon_hat_star621[j]*ifelse(Uh621[j]<=u[i],1,0)
+	  sum_star622 <- sum_star622+varepsilon_hat_star622[j]*ifelse(Uh622[j]<=u[i],1,0)
+	  sum_star623 <- sum_star623+varepsilon_hat_star623[j]*ifelse(Uh623[j]<=u[i],1,0)
+	}
+	
+    CRn_hat_star111[i] <- sum_star111
+	CRn_hat_star112[i] <- sum_star112
+	CRn_hat_star113[i] <- sum_star113
+    CRn_hat_star121[i] <- sum_star121
+	CRn_hat_star122[i] <- sum_star122
+	CRn_hat_star123[i] <- sum_star123
+	CRn_hat_star211[i] <- sum_star211
+	CRn_hat_star212[i] <- sum_star212
+	CRn_hat_star213[i] <- sum_star213
+    CRn_hat_star221[i] <- sum_star221
+	CRn_hat_star222[i] <- sum_star222
+	CRn_hat_star223[i] <- sum_star223
+	CRn_hat_star311[i] <- sum_star311
+	CRn_hat_star312[i] <- sum_star312
+	CRn_hat_star313[i] <- sum_star313
+    CRn_hat_star321[i] <- sum_star321
+	CRn_hat_star322[i] <- sum_star322
+	CRn_hat_star323[i] <- sum_star323
+	CRn_hat_star411[i] <- sum_star411
+	CRn_hat_star412[i] <- sum_star412
+	CRn_hat_star413[i] <- sum_star413
+    CRn_hat_star421[i] <- sum_star421
+	CRn_hat_star422[i] <- sum_star422
+	CRn_hat_star423[i] <- sum_star423
+	CRn_hat_star511[i] <- sum_star511
+	CRn_hat_star512[i] <- sum_star512
+	CRn_hat_star513[i] <- sum_star513
+    CRn_hat_star521[i] <- sum_star521
+	CRn_hat_star522[i] <- sum_star522
+	CRn_hat_star523[i] <- sum_star523
+	CRn_hat_star611[i] <- sum_star611
+	CRn_hat_star612[i] <- sum_star612
+	CRn_hat_star613[i] <- sum_star613
+    CRn_hat_star621[i] <- sum_star621
+	CRn_hat_star622[i] <- sum_star622
+	CRn_hat_star623[i] <- sum_star623
+  }
+  CT_n_star111 <- max(CRn_hat_star111)
+  CT_n_star112 <- max(CRn_hat_star112)
+  CT_n_star113 <- max(CRn_hat_star113)
+  CT_n_star121 <- max(CRn_hat_star121)
+  CT_n_star122 <- max(CRn_hat_star122)
+  CT_n_star123 <- max(CRn_hat_star123)
+  CT_n_star211 <- max(CRn_hat_star211)
+  CT_n_star212 <- max(CRn_hat_star212)
+  CT_n_star213 <- max(CRn_hat_star213)
+  CT_n_star221 <- max(CRn_hat_star221)
+  CT_n_star222 <- max(CRn_hat_star222)
+  CT_n_star223 <- max(CRn_hat_star223)
+  CT_n_star311 <- max(CRn_hat_star311)
+  CT_n_star312 <- max(CRn_hat_star312)
+  CT_n_star313 <- max(CRn_hat_star313)
+  CT_n_star321 <- max(CRn_hat_star321)
+  CT_n_star322 <- max(CRn_hat_star322)
+  CT_n_star323 <- max(CRn_hat_star323)
+  CT_n_star411 <- max(CRn_hat_star411)
+  CT_n_star412 <- max(CRn_hat_star412)
+  CT_n_star413 <- max(CRn_hat_star413)
+  CT_n_star421 <- max(CRn_hat_star421)
+  CT_n_star422 <- max(CRn_hat_star422)
+  CT_n_star423 <- max(CRn_hat_star423)
+  CT_n_star511 <- max(CRn_hat_star511)
+  CT_n_star512 <- max(CRn_hat_star512)
+  CT_n_star513 <- max(CRn_hat_star513)
+  CT_n_star521 <- max(CRn_hat_star521)
+  CT_n_star522 <- max(CRn_hat_star522)
+  CT_n_star523 <- max(CRn_hat_star523)
+  CT_n_star611 <- max(CRn_hat_star611)
+  CT_n_star612 <- max(CRn_hat_star612)
+  CT_n_star613 <- max(CRn_hat_star613)
+  CT_n_star621 <- max(CRn_hat_star621)
+  CT_n_star622 <- max(CRn_hat_star622)
+  CT_n_star623 <- max(CRn_hat_star623)
+  CT_n_star11 <- cbind(CT_n_star111,CT_n_star112,CT_n_star113)
+  CT_n_star12 <- cbind(CT_n_star121,CT_n_star122,CT_n_star123)
+  CT_n_star21 <- cbind(CT_n_star211,CT_n_star212,CT_n_star213)
+  CT_n_star22 <- cbind(CT_n_star221,CT_n_star222,CT_n_star223)
+  CT_n_star31 <- cbind(CT_n_star311,CT_n_star312,CT_n_star313)
+  CT_n_star32 <- cbind(CT_n_star321,CT_n_star322,CT_n_star323)
+  CT_n_star41 <- cbind(CT_n_star411,CT_n_star412,CT_n_star413)
+  CT_n_star42 <- cbind(CT_n_star421,CT_n_star422,CT_n_star423)
+  CT_n_star51 <- cbind(CT_n_star511,CT_n_star512,CT_n_star513)
+  CT_n_star52 <- cbind(CT_n_star521,CT_n_star522,CT_n_star523)
+  CT_n_star61 <- cbind(CT_n_star611,CT_n_star612,CT_n_star613)
+  CT_n_star62 <- cbind(CT_n_star621,CT_n_star622,CT_n_star623)  
+  
+  return(list(CT_n_star11=CT_n_star11,CT_n_star12=CT_n_star12,CT_n_star21=CT_n_star21,CT_n_star22=CT_n_star22,CT_n_star31=CT_n_star31,CT_n_star32=CT_n_star32,CT_n_star41=CT_n_star41,CT_n_star42=CT_n_star42,CT_n_star51=CT_n_star51,CT_n_star52=CT_n_star52,CT_n_star61=CT_n_star61,CT_n_star62=CT_n_star62))  
+}
+
+
+
+#################################################################
+#Data generating processes
+#################################################################
+generate_data <- function(R,m,n,T) 
+{
+  rho <- c(0.25,0.5,0.75)
+  
+  #Generating weight matrix
+  I_m1 <- diag(m[1])
+  I_m2 <- diag(m[2])
+  I_R1 <- diag(R[1])
+  I_R2 <- diag(R[2])
+  I_R3 <- diag(R[3])
+  l_m1 <- rep(1,m[1])
+  l_m2 <- rep(1,m[2])
+  B_m1 <- (l_m1%*%t(l_m1)-I_m1)/(m[1]-1) 
+  B_m2 <- (l_m2%*%t(l_m2)-I_m2)/(m[2]-1)
+  W_n1 <- kronecker(I_R1,B_m1)
+  W_n2 <- kronecker(I_R2,B_m1)
+  W_n3 <- kronecker(I_R3,B_m1)
+  W_n4 <- kronecker(I_R1,B_m2)
+  W_n5 <- kronecker(I_R2,B_m2)
+  W_n6 <- kronecker(I_R3,B_m2)
+
+  #Generates a multivariate normal distribution Z_1
+  mean_vector <- rep(0,2) #mean vector
+  cov_matrix <- diag(2) #Covariance matrix 
+  Z_n1 <- mvrnorm(n[1],mean_vector,cov_matrix)#Generate multivariate normal distribution of random numbers
+  Z_n2 <- mvrnorm(n[2],mean_vector,cov_matrix)
+  Z_n3 <- mvrnorm(n[3],mean_vector,cov_matrix)
+  Z_n4 <- mvrnorm(n[4],mean_vector,cov_matrix)
+  Z_n5 <- mvrnorm(n[5],mean_vector,cov_matrix)
+  Z_n6 <- mvrnorm(n[6],mean_vector,cov_matrix)  
+  #Generate a multivariate uniform distribution Z_2
+  #Z_2 <- matrix(runif(n*3),ncol=3)
+
+  #Functional data part
+  t <- runif(T)
+  gamma_t <- sqrt(2)*sin(pi*t/2)+3*sqrt(2)*sin(3*pi*t/2)
+  #gamma_t2 <- sin(pi*t/2)+sin(3*pi*t/2)/2+sin(5*pi*t/2)/4
+  lambda <- (((1:100)-0.5)*pi)^(-2)
+  r <- rep(0,100)
+  phi_t <- matrix(0,100,T)
+  X_nt1 <- matrix(0,n[1],T)
+  X_nt2 <- matrix(0,n[2],T)
+  X_nt3 <- matrix(0,n[3],T)
+  X_nt4 <- matrix(0,n[4],T)
+  X_nt5 <- matrix(0,n[5],T)
+  X_nt6 <- matrix(0,n[6],T)
+  for(i in 1:n[1])
+  {
+    for(j in 1:100)
+    { 
+      r[j] <- rnorm(1,0,sqrt(lambda[j]))
+      phi_t[j,] <- sqrt(2)*sin((j-0.5)*pi*t)
+    }
+    X_nt1[i,] <- t(r)%*%phi_t
+  }
+  for(i in 1:n[2])
+  {
+    for(j in 1:100)
+    { 
+      r[j] <- rnorm(1,0,sqrt(lambda[j]))
+      phi_t[j,] <- sqrt(2)*sin((j-0.5)*pi*t)
+    }
+    X_nt2[i,] <- t(r)%*%phi_t
+  }
+  for(i in 1:n[3])
+  {
+    for(j in 1:100)
+    { 
+      r[j] <- rnorm(1,0,sqrt(lambda[j]))
+      phi_t[j,] <- sqrt(2)*sin((j-0.5)*pi*t)
+    }
+    X_nt3[i,] <- t(r)%*%phi_t
+  }
+  for(i in 1:n[4])
+  {
+    for(j in 1:100)
+    { 
+      r[j] <- rnorm(1,0,sqrt(lambda[j]))
+      phi_t[j,] <- sqrt(2)*sin((j-0.5)*pi*t)
+    }
+    X_nt4[i,] <- t(r)%*%phi_t
+  }
+  for(i in 1:n[5])
+  {
+    for(j in 1:100)
+    { 
+      r[j] <- rnorm(1,0,sqrt(lambda[j]))
+      phi_t[j,] <- sqrt(2)*sin((j-0.5)*pi*t)
+    }
+    X_nt5[i,] <- t(r)%*%phi_t
+  }
+  for(i in 1:n[6])
+  {
+    for(j in 1:100)
+    { 
+      r[j] <- rnorm(1,0,sqrt(lambda[j]))
+      phi_t[j,] <- sqrt(2)*sin((j-0.5)*pi*t)
+    }
+    X_nt6[i,] <- t(r)%*%phi_t
+  }  
+  Fun_data1 <- X_nt1%*%gamma_t/T
+  Fun_data2 <- X_nt2%*%gamma_t/T
+  Fun_data3 <- X_nt3%*%gamma_t/T
+  Fun_data4 <- X_nt4%*%gamma_t/T
+  Fun_data5 <- X_nt5%*%gamma_t/T
+  Fun_data6 <- X_nt6%*%gamma_t/T
+  #Fun_data2 <- X_nt%*%gamma_t2/T
+
+  #Generate error term
+  varepsilon_11 <- rnorm(n[1],0,1)
+  varepsilon_21 <- rnorm(n[2],0,1)
+  varepsilon_31 <- rnorm(n[3],0,1)
+  varepsilon_41 <- rnorm(n[4],0,1)
+  varepsilon_51 <- rnorm(n[5],0,1)
+  varepsilon_61 <- rnorm(n[6],0,1)
+  varepsilon_12 <- sqrt(2)*(1+Z_n1[,1])*varepsilon_11
+  varepsilon_22 <- sqrt(2)*(1+Z_n2[,1])*varepsilon_21
+  varepsilon_32 <- sqrt(2)*(1+Z_n3[,1])*varepsilon_31
+  varepsilon_42 <- sqrt(2)*(1+Z_n4[,1])*varepsilon_41
+  varepsilon_52 <- sqrt(2)*(1+Z_n5[,1])*varepsilon_51
+  varepsilon_62 <- sqrt(2)*(1+Z_n6[,1])*varepsilon_61
+  Y_n11 <- matrix(0,n[1],3)
+  Y_n12 <- matrix(0,n[1],3)
+  Y_n21 <- matrix(0,n[2],3)
+  Y_n22 <- matrix(0,n[2],3)
+  Y_n31 <- matrix(0,n[3],3)
+  Y_n32 <- matrix(0,n[3],3)
+  Y_n41 <- matrix(0,n[4],3)
+  Y_n42 <- matrix(0,n[4],3)
+  Y_n51 <- matrix(0,n[5],3)
+  Y_n52 <- matrix(0,n[5],3)
+  Y_n61 <- matrix(0,n[6],3)
+  Y_n62 <- matrix(0,n[6],3)
+  for(i in 1:3)
+  {
+    Y_n11[,i] <- ginv(diag(n[1])-rho[i]*W_n1)%*%(Z_n1[,1]+Z_n1[,2]+Fun_data1+varepsilon_11)
+    Y_n12[,i] <- ginv(diag(n[1])-rho[i]*W_n1)%*%(Z_n1[,1]+Z_n1[,2]+Fun_data1+varepsilon_12) 
+    Y_n21[,i] <- ginv(diag(n[2])-rho[i]*W_n2)%*%(Z_n2[,1]+Z_n2[,2]+Fun_data2+varepsilon_21)
+    Y_n22[,i] <- ginv(diag(n[2])-rho[i]*W_n2)%*%(Z_n2[,1]+Z_n2[,2]+Fun_data2+varepsilon_22)
+    Y_n31[,i] <- ginv(diag(n[3])-rho[i]*W_n3)%*%(Z_n3[,1]+Z_n3[,2]+Fun_data3+varepsilon_31)
+    Y_n32[,i] <- ginv(diag(n[3])-rho[i]*W_n3)%*%(Z_n3[,1]+Z_n3[,2]+Fun_data3+varepsilon_32)
+    Y_n41[,i] <- ginv(diag(n[4])-rho[i]*W_n4)%*%(Z_n4[,1]+Z_n4[,2]+Fun_data4+varepsilon_41)
+    Y_n42[,i] <- ginv(diag(n[4])-rho[i]*W_n4)%*%(Z_n4[,1]+Z_n4[,2]+Fun_data4+varepsilon_42) 
+    Y_n51[,i] <- ginv(diag(n[5])-rho[i]*W_n5)%*%(Z_n5[,1]+Z_n5[,2]+Fun_data5+varepsilon_51)
+    Y_n52[,i] <- ginv(diag(n[5])-rho[i]*W_n5)%*%(Z_n5[,1]+Z_n5[,2]+Fun_data5+varepsilon_52)
+    Y_n61[,i] <- ginv(diag(n[6])-rho[i]*W_n6)%*%(Z_n6[,1]+Z_n6[,2]+Fun_data6+varepsilon_61)
+    Y_n62[,i] <- ginv(diag(n[6])-rho[i]*W_n6)%*%(Z_n6[,1]+Z_n6[,2]+Fun_data6+varepsilon_62)
+  }
+
+  return(list(W_n1=W_n1,W_n2=W_n2,W_n3=W_n3,W_n4=W_n4,W_n5=W_n5,W_n6=W_n6,Z_n1=Z_n1,Z_n2=Z_n2,Z_n3=Z_n3,Z_n4=Z_n4,Z_n5=Z_n5,Z_n6=Z_n6,X_nt1=X_nt1,X_nt2=X_nt2,X_nt3=X_nt3,X_nt4=X_nt4,X_nt5=X_nt5,X_nt6=X_nt6,Y_n11=Y_n11,Y_n12=Y_n12,Y_n21=Y_n21,Y_n22=Y_n22,Y_n31=Y_n31,Y_n32=Y_n32,Y_n41=Y_n41,Y_n42=Y_n42,Y_n51=Y_n51,Y_n52=Y_n52,Y_n61=Y_n61,Y_n62=Y_n62))
+}
+
+###################################################################
+# main function 
+###################################################################
+main <- function(K,B)
+{
+  m <- c(5,8)
+  R <- c(30,40,50)
+  n <- c(m[1]*R[1],m[1]*R[2],m[1]*R[3],m[2]*R[1],m[2]*R[2],m[2]*R[3])
+  #d = 0
+  T = 100
+  alpha <- c(0.01,0.05,0.1)
+  CT_n11 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  CT_n12 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  CT_n21 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  CT_n22 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  CT_n31 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  CT_n32 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  CT_n41 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  CT_n42 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  CT_n51 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  CT_n52 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  CT_n61 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  CT_n62 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  CT_n_star11  <- matrix(rep(0,3*B),nrow=B,ncol=3)
+  CT_n_star12  <- matrix(rep(0,3*B),nrow=B,ncol=3)
+  CT_n_star21  <- matrix(rep(0,3*B),nrow=B,ncol=3)
+  CT_n_star22  <- matrix(rep(0,3*B),nrow=B,ncol=3)
+  CT_n_star31  <- matrix(rep(0,3*B),nrow=B,ncol=3)
+  CT_n_star32  <- matrix(rep(0,3*B),nrow=B,ncol=3)
+  CT_n_star41  <- matrix(rep(0,3*B),nrow=B,ncol=3)
+  CT_n_star42  <- matrix(rep(0,3*B),nrow=B,ncol=3)
+  CT_n_star51  <- matrix(rep(0,3*B),nrow=B,ncol=3)
+  CT_n_star52  <- matrix(rep(0,3*B),nrow=B,ncol=3)
+  CT_n_star61  <- matrix(rep(0,3*B),nrow=B,ncol=3)
+  CT_n_star62  <- matrix(rep(0,3*B),nrow=B,ncol=3)
+  p_star11 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  p_star12 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  p_star21 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  p_star22 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  p_star31 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  p_star32 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  p_star41 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  p_star42 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  p_star51 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  p_star52 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  p_star61 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  p_star62 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count111 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count112 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count113 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count121 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count122 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count123 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count211 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count212 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count213 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count221 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count222 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count223 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count311 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count312 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count313 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count321 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count322 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count323 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count411 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count412 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count413 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count421 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count422 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count423 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count511 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count512 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count513 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count521 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count522 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count523 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count611 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count612 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count613 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count621 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count622 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+  reject_count623 <- matrix(rep(0,3*K),nrow=K,ncol=3)
+
+  reject_rate1 <- rep(0,3)
+  reject_rate2 <- rep(0,3)
+  
+  set.seed(54321)
+  ###################################################################
+  # begin of cycle
+  ###################################################################
+  for(k in 1:K)
+  {
+	print(paste("正在进行第",k,"/1000次循环"))
+    data <- generate_data(R,m,n,T)
+    W_n1 <- data$W_n1
+	W_n2 <- data$W_n2
+	W_n3 <- data$W_n3
+	W_n4 <- data$W_n4
+	W_n5 <- data$W_n5
+	W_n6 <- data$W_n6
+    Z_n1 <- data$Z_n1
+	Z_n2 <- data$Z_n2
+	Z_n3 <- data$Z_n3
+	Z_n4 <- data$Z_n4
+	Z_n5 <- data$Z_n5
+	Z_n6 <- data$Z_n6
+    X_nt1 <- data$X_nt1
+	X_nt2 <- data$X_nt2
+	X_nt3 <- data$X_nt3
+	X_nt4 <- data$X_nt4
+	X_nt5 <- data$X_nt5
+	X_nt6 <- data$X_nt6
+    Y_n11 <- data$Y_n11
+	Y_n12 <- data$Y_n12
+	Y_n21 <- data$Y_n21
+	Y_n22 <- data$Y_n22
+	Y_n31 <- data$Y_n31
+	Y_n32 <- data$Y_n32
+	Y_n41 <- data$Y_n41
+	Y_n42 <- data$Y_n42
+	Y_n51 <- data$Y_n51
+	Y_n52 <- data$Y_n52
+	Y_n61 <- data$Y_n61
+	Y_n62 <- data$Y_n62
+    vec <- phi_hat(X_nt1,X_nt2,X_nt3,X_nt4,X_nt5,X_nt6,n,T)
+    Phi1 <- vec$Phi1
+	Phi2 <- vec$Phi2
+	Phi3 <- vec$Phi3
+	Phi4 <- vec$Phi4
+	Phi5 <- vec$Phi5
+	Phi6 <- vec$Phi6
+    h_2_tilde1 <- vec$h_2_tilde1
+	h_2_tilde2 <- vec$h_2_tilde2
+	h_2_tilde3 <- vec$h_2_tilde3
+	h_2_tilde4 <- vec$h_2_tilde4
+	h_2_tilde5 <- vec$h_2_tilde5
+	h_2_tilde6 <- vec$h_2_tilde6
+    thetaalpha <- thetaalpha_hat(Z_n1,Z_n2,Z_n3,Z_n4,Z_n5,Z_n6,W_n1,W_n2,W_n3,W_n4,W_n5,W_n6,Y_n11,Y_n12,Y_n21,Y_n22,Y_n31,Y_n32,Y_n41,Y_n42,Y_n51,Y_n52,Y_n61,Y_n62,n,Phi1,Phi2,Phi3,Phi4,Phi5,Phi6,T)
+	theta_hat11 <- thetaalpha$theta_hat11
+	theta_hat12 <- thetaalpha$theta_hat12
+	theta_hat21 <- thetaalpha$theta_hat21
+	theta_hat22 <- thetaalpha$theta_hat22
+	theta_hat31 <- thetaalpha$theta_hat31
+	theta_hat32 <- thetaalpha$theta_hat32
+	theta_hat41 <- thetaalpha$theta_hat41
+	theta_hat42 <- thetaalpha$theta_hat42
+	theta_hat51 <- thetaalpha$theta_hat51
+	theta_hat52 <- thetaalpha$theta_hat52
+	theta_hat61 <- thetaalpha$theta_hat61
+	theta_hat62 <- thetaalpha$theta_hat62
+    alpha_hat11 <- thetaalpha$alpha_hat11
+	alpha_hat12 <- thetaalpha$alpha_hat12
+	alpha_hat21 <- thetaalpha$alpha_hat21
+	alpha_hat22 <- thetaalpha$alpha_hat22
+	alpha_hat31 <- thetaalpha$alpha_hat31
+	alpha_hat32 <- thetaalpha$alpha_hat32
+	alpha_hat41 <- thetaalpha$alpha_hat41
+	alpha_hat42 <- thetaalpha$alpha_hat42
+	alpha_hat51 <- thetaalpha$alpha_hat51
+	alpha_hat52 <- thetaalpha$alpha_hat52
+	alpha_hat61 <- thetaalpha$alpha_hat61
+	alpha_hat62 <- thetaalpha$alpha_hat62
+    TEST <- TS(Y_n11,Y_n12,Y_n21,Y_n22,Y_n31,Y_n32,Y_n41,Y_n42,Y_n51,Y_n52,Y_n61,Y_n62,W_n1,W_n2,W_n3,W_n4,W_n5,W_n6,Z_n1,Z_n2,Z_n3,Z_n4,Z_n5,Z_n6,X_nt1,X_nt2,X_nt3,X_nt4,X_nt5,X_nt6,theta_hat11,theta_hat12,theta_hat21,theta_hat22,theta_hat31,theta_hat32,theta_hat41,theta_hat42,theta_hat51,theta_hat52,theta_hat61,theta_hat62,Phi1,Phi2,Phi3,Phi4,Phi5,Phi6,alpha_hat11,alpha_hat12,alpha_hat21,alpha_hat22,alpha_hat31,alpha_hat32,alpha_hat41,alpha_hat42,alpha_hat51,alpha_hat52,alpha_hat61,alpha_hat62,T,h_2_tilde1,h_2_tilde2,h_2_tilde3,h_2_tilde4,h_2_tilde5,h_2_tilde6,n)
+    varepsilon_hat11 <- TEST$varepsilon_hat11
+	varepsilon_hat12 <- TEST$varepsilon_hat12
+	varepsilon_hat21 <- TEST$varepsilon_hat21
+	varepsilon_hat22 <- TEST$varepsilon_hat22
+	varepsilon_hat31 <- TEST$varepsilon_hat31
+	varepsilon_hat32 <- TEST$varepsilon_hat32
+	varepsilon_hat41 <- TEST$varepsilon_hat41
+	varepsilon_hat42 <- TEST$varepsilon_hat42
+	varepsilon_hat51 <- TEST$varepsilon_hat51
+	varepsilon_hat52 <- TEST$varepsilon_hat52
+	varepsilon_hat61 <- TEST$varepsilon_hat61
+	varepsilon_hat62 <- TEST$varepsilon_hat62
+    CT_n11[k,] <- TEST$CT_n11
+	CT_n12[k,] <- TEST$CT_n12
+	CT_n21[k,] <- TEST$CT_n21
+	CT_n22[k,] <- TEST$CT_n22
+	CT_n31[k,] <- TEST$CT_n31
+	CT_n32[k,] <- TEST$CT_n32
+	CT_n41[k,] <- TEST$CT_n41
+	CT_n42[k,] <- TEST$CT_n42
+	CT_n51[k,] <- TEST$CT_n51
+	CT_n52[k,] <- TEST$CT_n52
+	CT_n61[k,] <- TEST$CT_n61
+	CT_n62[k,] <- TEST$CT_n62
+    for(b in 1:B)
+    {
+	  CT_star <- bootstrap_test(varepsilon_hat11,varepsilon_hat12,varepsilon_hat21,varepsilon_hat22,varepsilon_hat31,varepsilon_hat32,varepsilon_hat41,varepsilon_hat42,varepsilon_hat51,varepsilon_hat52,varepsilon_hat61,varepsilon_hat62,CT_n11,CT_n12,CT_n21,CT_n22,CT_n31,CT_n32,CT_n41,CT_n42,CT_n51,CT_n52,CT_n61,CT_n62,n,Z_n1,W_n1,Z_n2,W_n2,Z_n3,W_n3,Z_n4,W_n4,Z_n5,W_n5,Z_n6,W_n6,theta_hat11,theta_hat12,Phi1,alpha_hat11,alpha_hat12,X_nt1,h_2_tilde1,theta_hat21,theta_hat22,Phi2,alpha_hat21,alpha_hat22,X_nt2,h_2_tilde2,theta_hat31,theta_hat32,Phi3,alpha_hat31,alpha_hat32,X_nt3,h_2_tilde3,theta_hat41,theta_hat42,Phi4,alpha_hat41,alpha_hat42,X_nt4,h_2_tilde4,theta_hat51,theta_hat52,Phi5,alpha_hat51,alpha_hat52,X_nt5,h_2_tilde5,theta_hat61,theta_hat62,Phi6,alpha_hat61,alpha_hat62,X_nt6,h_2_tilde6,T)
+      CT_n_star11[b,] <- CT_star$CT_n_star11
+	  CT_n_star12[b,] <- CT_star$CT_n_star12
+	  CT_n_star21[b,] <- CT_star$CT_n_star21
+	  CT_n_star22[b,] <- CT_star$CT_n_star22
+	  CT_n_star31[b,] <- CT_star$CT_n_star31
+	  CT_n_star32[b,] <- CT_star$CT_n_star32
+	  CT_n_star41[b,] <- CT_star$CT_n_star41
+	  CT_n_star42[b,] <- CT_star$CT_n_star42
+	  CT_n_star51[b,] <- CT_star$CT_n_star51
+	  CT_n_star52[b,] <- CT_star$CT_n_star52
+	  CT_n_star61[b,] <- CT_star$CT_n_star61
+	  CT_n_star62[b,] <- CT_star$CT_n_star62
+    }
+
+	for(i in 1:3)
+	{
+      p_star11[k,i] <- mean(ifelse(CT_n_star11[,i]>CT_n11[k,i],1,0))
+	  p_star12[k,i] <- mean(ifelse(CT_n_star12[,i]>CT_n12[k,i],1,0))
+	  p_star21[k,i] <- mean(ifelse(CT_n_star21[,i]>CT_n21[k,i],1,0))
+	  p_star22[k,i] <- mean(ifelse(CT_n_star22[,i]>CT_n22[k,i],1,0))
+	  p_star31[k,i] <- mean(ifelse(CT_n_star31[,i]>CT_n31[k,i],1,0))
+	  p_star32[k,i] <- mean(ifelse(CT_n_star32[,i]>CT_n32[k,i],1,0))
+	  p_star41[k,i] <- mean(ifelse(CT_n_star41[,i]>CT_n41[k,i],1,0))
+	  p_star42[k,i] <- mean(ifelse(CT_n_star42[,i]>CT_n42[k,i],1,0))
+	  p_star51[k,i] <- mean(ifelse(CT_n_star51[,i]>CT_n51[k,i],1,0))
+	  p_star52[k,i] <- mean(ifelse(CT_n_star52[,i]>CT_n52[k,i],1,0))
+	  p_star61[k,i] <- mean(ifelse(CT_n_star61[,i]>CT_n61[k,i],1,0))
+	  p_star62[k,i] <- mean(ifelse(CT_n_star62[,i]>CT_n62[k,i],1,0))
+	  if(p_star11[k,i]<=alpha[1])
+	  {
+	    reject_count111[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count111[k,i] <-0
+	  }
+	  if(p_star11[k,i]<=alpha[2])
+	  {
+	    reject_count112[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count112[k,i] <-0
+	  }
+	  if(p_star11[k,i]<=alpha[3])
+	  {
+	    reject_count113[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count113[k,i] <-0
+	  }	
+	  if(p_star12[k,i]<=alpha[1])
+	  {
+	    reject_count121[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count121[k,i] <-0
+	  }
+	  if(p_star12[k,i]<=alpha[2])
+	  {
+	    reject_count122[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count122[k,i] <-0
+	  }
+	  if(p_star12[k,i]<=alpha[3])
+	  {
+	    reject_count123[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count123[k,i] <-0
+	  }
+	  if(p_star21[k,i]<=alpha[1])
+	  {
+	    reject_count211[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count211[k,i] <-0
+	  }
+	  if(p_star21[k,i]<=alpha[2])
+	  {
+	    reject_count212[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count212[k,i] <-0
+	  }
+	  if(p_star21[k,i]<=alpha[3])
+	  {
+	    reject_count213[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count213[k,i] <-0
+	  }	
+	  if(p_star22[k,i]<=alpha[1])
+	  {
+	    reject_count221[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count221[k,i] <-0
+	  }
+	  if(p_star22[k,i]<=alpha[2])
+	  {
+	    reject_count222[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count222[k,i] <-0
+	  }
+	  if(p_star22[k,i]<=alpha[3])
+	  {
+	    reject_count223[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count223[k,i] <-0
+	  }
+	  if(p_star31[k,i]<=alpha[1])
+	  {
+	    reject_count311[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count311[k,i] <-0
+	  }
+	  if(p_star31[k,i]<=alpha[2])
+	  {
+	    reject_count312[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count312[k,i] <-0
+	  }
+	  if(p_star31[k,i]<=alpha[3])
+	  {
+	    reject_count313[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count313[k,i] <-0
+	  }	
+	  if(p_star32[k,i]<=alpha[1])
+	  {
+	    reject_count321[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count321[k,i] <-0
+	  }
+	  if(p_star32[k,i]<=alpha[2])
+	  {
+	    reject_count322[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count322[k,i] <-0
+	  }
+	  if(p_star32[k,i]<=alpha[3])
+	  {
+	    reject_count323[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count323[k,i] <-0
+	  }
+	  if(p_star41[k,i]<=alpha[1])
+	  {
+	    reject_count411[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count411[k,i] <-0
+	  }
+	  if(p_star41[k,i]<=alpha[2])
+	  {
+	    reject_count412[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count412[k,i] <-0
+	  }
+	  if(p_star41[k,i]<=alpha[3])
+	  {
+	    reject_count413[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count413[k,i] <-0
+	  }	
+	  if(p_star42[k,i]<=alpha[1])
+	  {
+	    reject_count421[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count421[k,i] <-0
+	  }
+	  if(p_star42[k,i]<=alpha[2])
+	  {
+	    reject_count422[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count422[k,i] <-0
+	  }
+	  if(p_star42[k,i]<=alpha[3])
+	  {
+	    reject_count423[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count423[k,i] <-0
+	  }
+	  if(p_star51[k,i]<=alpha[1])
+	  {
+	    reject_count511[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count511[k,i] <-0
+	  }
+	  if(p_star51[k,i]<=alpha[2])
+	  {
+	    reject_count512[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count512[k,i] <-0
+	  }
+	  if(p_star51[k,i]<=alpha[3])
+	  {
+	    reject_count513[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count513[k,i] <-0
+	  }	
+	  if(p_star52[k,i]<=alpha[1])
+	  {
+	    reject_count521[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count521[k,i] <-0
+	  }
+	  if(p_star52[k,i]<=alpha[2])
+	  {
+	    reject_count522[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count522[k,i] <-0
+	  }
+	  if(p_star52[k,i]<=alpha[3])
+	  {
+	    reject_count523[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count523[k,i] <-0
+	  }
+	  if(p_star61[k,i]<=alpha[1])
+	  {
+	    reject_count611[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count611[k,i] <-0
+	  }
+	  if(p_star61[k,i]<=alpha[2])
+	  {
+	    reject_count612[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count612[k,i] <-0
+	  }
+	  if(p_star61[k,i]<=alpha[3])
+	  {
+	    reject_count613[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count613[k,i] <-0
+	  }	
+	  if(p_star62[k,i]<=alpha[1])
+	  {
+	    reject_count621[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count621[k,i] <-0
+	  }
+	  if(p_star62[k,i]<=alpha[2])
+	  {
+	    reject_count622[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count622[k,i] <-0
+	  }
+	  if(p_star62[k,i]<=alpha[3])
+	  {
+	    reject_count623[k,i] <-1
+	  }
+      else
+	  {
+	    reject_count623[k,i] <-0
+	  }
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	}
+  }
+  #####################################################################
+  # end of for cycle
+  #####################################################################
+  
+  #####################################################################
+  # summarize the simulation results
+  #####################################################################
+  reject_rate111 <- apply(reject_count111,2,mean)
+  reject_rate112 <- apply(reject_count112,2,mean)
+  reject_rate113 <- apply(reject_count113,2,mean)
+  reject_rate121 <- apply(reject_count121,2,mean)
+  reject_rate122 <- apply(reject_count122,2,mean)
+  reject_rate123 <- apply(reject_count123,2,mean)
+  reject_rate211 <- apply(reject_count211,2,mean)
+  reject_rate212 <- apply(reject_count212,2,mean)
+  reject_rate213 <- apply(reject_count213,2,mean)
+  reject_rate221 <- apply(reject_count221,2,mean)
+  reject_rate222 <- apply(reject_count222,2,mean)
+  reject_rate223 <- apply(reject_count223,2,mean)
+  reject_rate311 <- apply(reject_count311,2,mean)
+  reject_rate312 <- apply(reject_count312,2,mean)
+  reject_rate313 <- apply(reject_count313,2,mean)
+  reject_rate321 <- apply(reject_count321,2,mean)
+  reject_rate322 <- apply(reject_count322,2,mean)
+  reject_rate323 <- apply(reject_count323,2,mean)
+  reject_rate411 <- apply(reject_count411,2,mean)
+  reject_rate412 <- apply(reject_count412,2,mean)
+  reject_rate413 <- apply(reject_count413,2,mean)
+  reject_rate421 <- apply(reject_count421,2,mean)
+  reject_rate422 <- apply(reject_count422,2,mean)
+  reject_rate423 <- apply(reject_count423,2,mean)
+  reject_rate511 <- apply(reject_count511,2,mean)
+  reject_rate512 <- apply(reject_count512,2,mean)
+  reject_rate513 <- apply(reject_count513,2,mean)
+  reject_rate521 <- apply(reject_count521,2,mean)
+  reject_rate522 <- apply(reject_count522,2,mean)
+  reject_rate523 <- apply(reject_count523,2,mean)
+  reject_rate611 <- apply(reject_count611,2,mean)
+  reject_rate612 <- apply(reject_count612,2,mean)
+  reject_rate613 <- apply(reject_count613,2,mean)
+  reject_rate621 <- apply(reject_count621,2,mean)
+  reject_rate622 <- apply(reject_count622,2,mean)
+  reject_rate623 <- apply(reject_count623,2,mean)
+  reject_rate1 <- rbind(reject_rate111,reject_rate112,reject_rate113,reject_rate211,reject_rate212,reject_rate213,reject_rate311,reject_rate312,reject_rate313,reject_rate411,reject_rate412,reject_rate413,reject_rate511,reject_rate512,reject_rate513,reject_rate611,reject_rate612,reject_rate613)
+  reject_rate2 <- rbind(reject_rate121,reject_rate122,reject_rate123,reject_rate221,reject_rate222,reject_rate223,reject_rate321,reject_rate322,reject_rate323,reject_rate421,reject_rate422,reject_rate423,reject_rate521,reject_rate522,reject_rate523,reject_rate621,reject_rate622,reject_rate623)
+  return(list(reject_rate1=reject_rate1,reject_rate2=reject_rate2))
+}
+
+main(1000,500)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
