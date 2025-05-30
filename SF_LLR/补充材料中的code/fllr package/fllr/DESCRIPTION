@@ -1,0 +1,13 @@
+Package: fllr
+Type: Package
+Title: Functional Local Linear Regression
+Version: 0.0.1
+Date: 2020-11-08
+Author: Stanislav Nagy <nagy@karlin.mff.cuni.cz>
+Maintainer: Stanislav Nagy <nagy@karlin.mff.cuni.cz>
+Depends: R (>= 2.10.0), locpol, parallelDist
+Description: Local linear smoothing for functional data and related methods. Estimation of the regression operator and the functional derivatives in scalar-on-function linear models. Uses fast implementations of the matrix operations from BLAS or LAPACK in C called from R.
+License: CC0
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1

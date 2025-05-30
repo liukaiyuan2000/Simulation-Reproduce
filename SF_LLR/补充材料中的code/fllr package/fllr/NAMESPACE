@@ -1,0 +1,6 @@
+useDynLib(fllr)
+
+exportPattern("^[^\\.]")
+
+import(locpol)
+import(parallelDist)
