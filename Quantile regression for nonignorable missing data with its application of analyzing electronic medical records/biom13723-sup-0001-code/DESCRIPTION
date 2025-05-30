@@ -1,0 +1,16 @@
+Package: qrMNAR
+Type: Package
+Title: Estimation of quantile regression for nonignorable missing data
+Version: 0.1.0
+Author: Aiai Yu
+Maintainer: The package maintainer <yuaasufe@163.com>
+Description: Provide a method to estimate quantile regression coefficient for nonignorable missing data via inverse probability weighting and a bootstrap method to estimate the variance of the coefficient estimates.
+Depends: R (>= 3.1.0)
+Imports: stats, base, Rcpp, quantreg, snow, doSNOW, foreach
+License: GPL
+Encoding: UTF-8
+LazyData: true
+NeedsCompilation: yes
+RoxygenNote: 7.1.1
+LinkingTo: Rcpp
+Packaged: 2022-02-17 14:29:54 UTC; HP
