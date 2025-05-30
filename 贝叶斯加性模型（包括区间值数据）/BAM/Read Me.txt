@@ -1,0 +1,7 @@
+Bayesian additive models
+
+• Simulation_R文件夹中包含了基于R跑的模拟程序，additive_funs.R是函数，additive_main.R是基于循环运行的模拟，R_parallel.R是基于并行运行的模拟，.Rdata文件中是已经运行完毕的模拟结果；
+• Simulation_Rcpp文件夹中包含了基于Rcpp跑的模拟程序，Rcpp_setting.R是一些基础设置如样本量等，Rcpp_main.R是基于循环运行的模拟，Rcpp_parallel.R是基于并行运行的模拟，.Rdata文件中是已经运行完毕的模拟结果；
+• Rcpp_funcs.cpp文件是编写好的rcpp函数程序；
+• 其它两个.cpp文件是编程时使用不同思路写的，均存在一些问题(用不上)；
+• rBAM_0.1.0.tar.gz是自己编写的一个程序包，程序包叫rBAM，主要用在Simulation_Rcpp/Rcpp_parallel.R中，需要先安装这个包再运行程序(因为使用并行时循环主体要识别rcpp函数，编成一个包可以减少编译时间)；
