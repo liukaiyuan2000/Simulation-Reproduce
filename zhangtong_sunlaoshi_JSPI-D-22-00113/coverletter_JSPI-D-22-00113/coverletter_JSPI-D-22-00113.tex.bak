@@ -1,0 +1,139 @@
+\documentclass[12pt]{letter}
+
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{amsfonts,psfrag}
+\usepackage{lscape}
+\usepackage{times}
+%\usepackage{color}
+\usepackage[usenames]{color}
+\usepackage{alltt}
+\usepackage{bm, times, enumerate,mathrsfs, amsmath, amssymb, graphicx, color, dsfont, graphics, multirow, booktabs, url}
+
+%\usepackage[usenames]{color}
+\newcommand{\comment}[1]{}
+
+
+\def\boxit#1{\vbox{\hrule\hbox{\vrule\kern6pt
+          \vbox{\kern6pt#1\kern6pt}\kern6pt\vrule}\hrule}}
+\def\bfred#1{{\color{red}\bf#1}}
+\def\bfblue#1{{\color{blue}\bf#1}}
+\def\hlred#1{{\color{red}#1}}
+\def\hlblue#1{{\color{blue}#1}}
+
+\def\huicomment#1{\vskip 2mm\boxit{\vskip 2mm{\color{blue}\bf#1} {\color{red}\bf --
+Judy\vskip 2mm}}\vskip 2mm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\oddsidemargin 0in \evensidemargin 0in \textwidth      6.5 in
+\headheight     0in \topmargin      0in \textheight 8.2in
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\baselineskip 18pt
+
+\renewcommand\baselinestretch{1.4}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\bbeta}{\boldsymbol{\beta}}
+\newcommand{\bD}{\mathbf{D}}
+\newcommand{\bb}{\mathbf{b}}
+\newcommand{\bw}{\mathbf{w}}
+\newcommand{\bz}{\mathbf{z}}
+\newcommand{\bW}{\mathbf{W}}
+\newcommand{\bZ}{\mathbf{Z}}
+\newcommand{\bX}{\mathbf{X}}
+\newcommand{\bu}{\mathbf{u}}
+\newcommand{\bU}{\mathbf{U}}
+\newcommand{\bV}{\mathbf{V}}
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\Rho}{\displaystyle{\large{\boldsymbol{\rho}}}}
+\newcommand{\bgamma}{\boldsymbol{\gamma}}
+\newcommand{\btheta}{\boldsymbol{\theta}}
+\newcommand{\bA}{\mathbf{A}}
+\newcommand{\bfeta}{\boldsymbol{\eta}}
+\newcommand{\bPsi}{\boldsymbol{\Psi}}
+\newcommand{\blam}{\boldsymbol{\lambda}}
+\newcommand{\bkappa}{\boldsymbol{\kappa}}
+
+\newcommand{\bfA}{\mathbf{A}}
+\newcommand{\bfh}{\mathbf{h}}
+\newcommand{\xv}{\mathbf{xv}}
+\newcommand{\Xv}{\mathbf{Xv}}
+\newcommand{\gmv}{\mathbf{gmv}}
+\newcommand{\btv}{\mathbf{btv}}
+\newcommand{\mb}{\mathbf{b}}
+\newcommand{\fv}{\mathbf{f}}
+\newcommand{\onev}{\mathbf{1}}
+\newcommand{\thv}{\mathbf{thv}}
+\newcommand{\cv}{\mathbf{c}}
+\newcommand{\smt}{\mathbf{smt}}
+\newcommand{\ld}{\mathbf{ld}}
+\newcommand{\zerov}{\mathbf{0}}
+\newcommand{\phiv}{\mathbf{\phi}}
+\newcommand{\yv}{\mathbf{y}}
+\newcommand{\Xc}{\mathbf{xc}}
+\newcommand{\Sc}{\mathbf{Sc}}
+\newcommand{\Fc}{\mathbf{Fc}}
+\newcommand{\tauv}{\mathbf{\tau}}
+\newcommand{\zv}{\mathbf{z}}
+\newcommand{\bv}{\mathbf{b}}
+\newcommand{\psiv}{\mathbf{\psi}}
+\newcommand{\epsv}{\mathbf{\epsilon}}
+\newcommand{\eps}{\mathbf{\epsilon}}
+\newcommand{\smn}{\mathbf{smn}}
+\newcommand{\bt}{\mathbf{t}}
+\newcommand{\wv}{\mathbf{w}}
+
+
+\begin{document}
+
+%\address{
+%Department of Statistics\\
+%North Carolina State University\\
+%2311 Stinson Drive\\
+%Raleigh, NC 26795\\
+%\signature{Huixia Judy Wang}
+%}
+
+\address{
+School of Mathematical Sciences, \\  University of Chinese Academy of Sciences,\\
+  Beijing 100049, China\\
+\signature{Zhihua Sun}
+}
+\begin{letter}{}
+
+
+\opening{Dear Editor,}
+
+\vspace{0.5cm}
+
+Please find the enclosed revised manuscript ``{\it Goodness-of-fit Tests for Partial Functional Linear Model with Errors in Scalar Covariates }" (JSPI-D-22-00113) that we revised for possible publication in {\it
+Journal of Statistical Planning and Inference}.
+
+According to your letter in  November 10, 2022,  this time, we  re-submit our revised paper, with a detailed reply to the report of Referee \# 2. 
+
+We are grateful to be given an opportunity to revise our work. We have
+tried our best to take into account the comments of the Executive Editors, the Associate Editor and the reviewer in this
+revision. Please find our point-by-point responses to the comments and
+suggestions  in this submission.
+We hope you will
+find the revision satisfactory.
+
+
+Thank you for your consideration. We look forward to hearing from you.
+
+Sincerely,
+
+Zhihua Sun
+%\closing{Sincerely yours}
+%\vspace{-70pt}
+%{\hspace{3in}
+%\begin{center}
+%%\includegraphics[width=1.5in, height=0.5in]{LiDeyuanSign.jpg}
+%\end{center}
+%}
+%\vspace{-50pt}
+%{\hspace{2.8in}
+%{Qingzhao Zhang}}
+\end{letter}
+
+\end{document}
+

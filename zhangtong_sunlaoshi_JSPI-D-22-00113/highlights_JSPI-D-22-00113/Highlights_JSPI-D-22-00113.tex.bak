@@ -1,0 +1,30 @@
+\documentclass[12pt]{report}
+\usepackage{fullpage,xspace,color}
+
+\begin{document}
+
+\begin{center}
+{\bf\Large Highlights \\[6pt] \normalsize{Manuscript: %SS-2020-0038
+JSPI-D-22-00113}}
+\end{center}
+
+\vspace{1cm}
+
+\begin{itemize}
+
+  \item  We study the adequacy test of the partial functional linear model
+when the scalar predictor is measured with additive error.\\
+
+  \item  A
+U-statistic type test is proposed, and its asymptotic properties are rigorously proved
+under the null and the alternative hypotheses.\\
+
+
+  \item  The proposed test can
+control the type I error well, and its power performance is satisfactory.
+
+\end{itemize}
+
+
+\end{document}
+
